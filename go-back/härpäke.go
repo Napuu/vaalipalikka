@@ -1,18 +1,19 @@
 package main
 
 import (
-	//"database/sql"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
+	"log"
 	"net/http"
 	//"net/url"
 	"os"
+	"strconv"
 	"strings"
-	//"strconv"
 )
 
-const DB_NAME string = "vaalit.db"
+const DB_NAME string = "vaalit.db?_foreign_keys=on"
 
 func main() {
 	fmt.Println("arguments")
@@ -26,28 +27,66 @@ func main() {
 		GenerateTokens(1000)
 	}
 	fmt.Println("opening database")
-	//database, _ := sql.Open("sqlite3", "./vaalit.db")
-	//statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY, firstname TEXT, lastname TEXT)")
-	//statement.Exec()
-	//statement, _ = database.Prepare("INSERT INTO people (firstname, lastname) VALUES (?, ?)")
-	//statement.Exec("Rob", "Gronkowski")
-	//rows, _ := database.Query("SELECT id, firstname, lastname FROM people")
-	//var id int
-	//var firstname string
-	//var lastname string
-	//for rows.Next() {
-	//rows.Scan(&id, &firstname, &lastname)
-	//fmt.Println(strconv.Itoa(id) + ": " + firstname + " " + lastname)
-	//}
 	http.HandleFunc("/", HelloServer)
-	http.HandleFunc("/api", HandleTokenEvent)
+	http.HandleFunc("/api", HandleApiQuery)
 	http.ListenAndServe(":8281", nil)
 }
 
-func HandleTokenEvent(w http.ResponseWriter, r *http.Request) {
-	keys, _ := r.URL.Query()["action"]
-	fmt.Println(keys[0] == "generate")
-	fmt.Fprintf(w, "asdf, %s!", r.URL.Path[1:])
+type Token struct {
+	Value string
+	Valid int
+	Used  int
+}
+type Tokens = []Token
+
+func HandleApiQuery(w http.ResponseWriter, r *http.Request) {
+	db, _ := sql.Open("sqlite3", "./vaalit.db")
+	params := r.URL.Query()
+	action, actionExists := params["action"]
+	if actionExists {
+		switch action[0] {
+		case "generatetokens":
+			_n, nExists := params["n"]
+			var n int
+			if nExists {
+				n, _ = strconv.Atoi(strings.Join(_n, ""))
+			} else {
+				n = 100
+			}
+			newTokens := GenerateTokens(n)
+			InsertNewTokens(newTokens, db)
+			fmt.Fprintf(w, "tokens generated")
+		case "showtokens":
+			tokens, ok := db.Query("SELECT value, valid, used FROM Token")
+			var value string
+			var valid int
+			var used int
+			var tokensStruct = Tokens{}
+			if ok == nil {
+				for tokens.Next() {
+					tokens.Scan(&value, &valid, &used)
+					tokensStruct = append(tokensStruct, Token{value, valid, used})
+				}
+			}
+			w.Header().Set("Content-Type", "application/json")
+			tokensJson, err := json.Marshal(tokensStruct)
+			if err != nil {
+				log.Fatal(err)
+			}
+			w.Write(tokensJson)
+		case "candidate":
+			HandleCandidateApiQuery(w, r)
+		case "voting":
+			HandleVotingApiQuery(w, r)
+		case "vote":
+			HandleVoteApiQuery(w, r)
+		case "login":
+			HandleLoginApiQuery(w, r)
+		default:
+			fmt.Println(action[0])
+			fmt.Fprintf(w, "asdf, %s!", r.URL.Path[1:])
+		}
+	}
 }
 func HelloServer(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello, %s!", r.URL.Path[1:])
