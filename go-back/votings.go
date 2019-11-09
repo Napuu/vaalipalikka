@@ -42,6 +42,7 @@ func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 			}
 			_, err = db.Exec("INSERT INTO Voting(name, id, description, open, ended, votespertoken) VALUES(?, ?, ?, ?, ?, ?)", t.Name, t.Id, t.Description, t.Open, t.Ended, t.VotesPerToken)
 			if err != nil {
+				fmt.Println("name", t.Name, "id",  t.Id, "desc", t.Description, "open",  t.Open, "ended", t.Ended, "vpt", t.VotesPerToken)
 				log.Fatal(err)
 			}
 			if err != nil {

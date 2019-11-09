@@ -1,18 +1,36 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Home from '../views/Home.vue'
+import Voting from '../views/Voting.vue'
+import Welcome from '../views/Welcome.vue'
 import AdminHome from '../views/AdminHome.vue'
+import store from '@/store'
 
 Vue.use(VueRouter)
 
 const routes = [
   {
+    path: '/voting',
+    name: 'voting',
+    component: Voting,
+    beforeEnter: (to: any, from: any, next: any) => {
+      if (store.state.authenticated) {
+        next()
+      } else {
+        next("/")
+      }
+    },
+  },
+  {
     path: '/',
-    name: 'home',
-    component: Home,
-    meta: {
-      guest: true
-    }
+    name: 'welcome',
+    component: Welcome,
+    beforeEnter: (to: any, from: any, next: any) => {
+      if (!store.state.authenticated) {
+        next()
+      } else {
+        next("/voting")
+      }
+    },
   },
   {
     path: '/about',
@@ -26,15 +44,20 @@ const routes = [
     path: '/admin',
     name: 'admin',
     component: AdminHome,
+    beforeEnter: (to: any, from: any, next: any) => {
+      if (store.state.authenticated && store.state.role === "admin") {
+        next()
+      } else {
+        next("/")
+      }
+    },
     meta: {
       requiresAuth: true,
       is_admin: true
     }
   }
 ]
-
 const router = new VueRouter({
   routes
 })
-
 export default router

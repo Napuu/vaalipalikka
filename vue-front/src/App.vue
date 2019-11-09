@@ -1,8 +1,9 @@
 <template>
   <div id="app">
     <div id="nav">
-      <!-- <router-link to="/">Home</router-link> | -->
-      <router-link v-if="this.$store.state.authenticated" to="/about" v-on:click.native="logout()" replace>Logout</router-link>
+      <Login />
+      <router-link v-if="this.$store.state.authenticated" to="/" v-on:click.native="logout()" replace>Logout</router-link>
+      <TokenThingy />
     </div>
     <router-view/>
   </div>
@@ -29,16 +30,22 @@
 #nav a.router-link-exact-active {
   color: #42b983;
 }
+#nav {
+  display: flex;
+}
 </style>
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
+    /* eslint-disable no-alert, no-console */
+import Login from '@/components/Login.vue'
 
 @Component
 export default class App extends Vue {
   @Prop() private msg!: string;
   private logout() {
-
+    this.$store.commit('logout')
+    this.$router.push("/")
   }
 }
 

@@ -3,11 +3,53 @@ package main
 import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
-	"log"
 	"math/rand"
 	"strconv"
 	"time"
+	"fmt"
+	"encoding/json"
+	"log"
+	"net/http"
+	"strings"
 )
+
+func HandleTokenApiQuery(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	db, _ := sql.Open("sqlite3", DB_NAME)
+	action, _ := params["a"]
+	switch strings.Join(action, "") {
+	case "generatetokens":
+		_n, nExists := params["n"]
+		var n int
+		if nExists {
+			n, _ = strconv.Atoi(strings.Join(_n, ""))
+		} else {
+			n = 100
+		}
+		newTokens := GenerateTokens(n)
+		InsertNewTokens(newTokens, db)
+		fmt.Fprintf(w, "tokens generated")
+	case "showtokens":
+		tokens, ok := db.Query("SELECT value, valid FROM Token")
+		var value string
+		var valid int
+		var tokensStruct = Tokens{}
+		if ok == nil {
+			for tokens.Next() {
+				tokens.Scan(&value, &valid)
+				tokensStruct = append(tokensStruct, Token{value, valid})
+			}
+		} else {
+			log.Fatal(ok)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		tokensJson, err := json.Marshal(tokensStruct)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w.Write(tokensJson)
+	}
+}
 
 func GenerateTokens(amount int) map[string]struct{} {
 	const TOKENLENGTH = 6
@@ -46,7 +88,7 @@ func InsertNewTokens(tokens map[string]struct{}, db *sql.DB) {
 	}
 	tx, _ := db.Begin()
 	for token, _ := range tokens {
-		tx.Exec("INSERT INTO Token(value, valid, used) VALUES(?, 0)", token)
+		tx.Exec("INSERT INTO Token(value, valid) VALUES(?, 0)", token)
 	}
 	tx.Commit()
 }

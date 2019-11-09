@@ -26,17 +26,23 @@ func HandleCandidateApiQuery(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	db, _ := sql.Open("sqlite3", DB_NAME)
 	action, actionExists := params["a"]
+	fmt.Println("adding candidate ???")
 	if actionExists {
+		fmt.Println("adding candidate ??")
 		switch strings.Join(action, "") {
 		case "add":
+			fmt.Println("adding candidate")
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
+				fmt.Println("err")
 				fmt.Fprint(w, "err")
 				break
 			}
 			var t Candidate
 			err = json.Unmarshal(body, &t)
 			if err != nil || t.Description == "" || t.Name == "" || t.Id == "" {
+				fmt.Println("json")
+				fmt.Println(err)
 				fmt.Fprint(w, "malformed json")
 				break
 			}
