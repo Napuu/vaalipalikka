@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 
 Vue.use(Vuex)
+    /* eslint-disable no-alert, no-console */
 export default new Vuex.Store({
   state: {
     tokenIsVisible: false,
@@ -16,6 +17,7 @@ export default new Vuex.Store({
     probableCandidateId: "",
     probableVotingId: "",
     admin: {
+      activeTab: "",
       votings: Array<PureVoting>(),
       votes: Array<PureVote>(),
       candidates: Array<PureCandidate>(),
@@ -25,7 +27,7 @@ export default new Vuex.Store({
     }
   },
   mutations: {
-    login(state, {role , token}) {
+    login(state, {role, token}) {
       state.authenticated = true
       state.role = role
       state.token = token
@@ -51,6 +53,12 @@ export default new Vuex.Store({
     },
     setEditableVoting(state, {voting}) {
       state.admin.editableVoting = voting
+    },
+    clearEditableVotingTarget(state) {
+      state.admin.editableVoting = <PureVoting>{} 
+    },
+    setActiveAdminTab(state, {tab}) {
+      state.admin.activeTab = tab
     }
   },
   actions: {
@@ -82,6 +90,39 @@ export default new Vuex.Store({
     async fetchAvailabilities(state, {options}) {
       let _availability = await fetch("/api?action=availability&a=show", options)
       this.state.admin.availabilities = await _availability.json()
+    },
+    async addOrUpdateVoting(state, {voting}) {
+      let newVoting: PureVoting = {
+        Name: voting.name,
+        Id: voting.id,
+        Open: voting.open,
+        Ended: voting.ended,
+        Description: "",
+        VotesPerToken: parseInt(voting.votespertoken)
+      }
+      let answer = await fetch("/api?action=voting&a=add", {
+        headers: {"Authorization": this.state.token},
+        method: "POST",
+        body: JSON.stringify(newVoting)
+      })
+      let answerText = await answer.text()
+      if (answerText.indexOf("replaced") !== -1) {
+        this.state.admin.votings = this.state.admin.votings.map(_voting => {
+          if (_voting.Id == voting.id) {
+            return newVoting
+          } else {
+            return _voting
+          }
+        })
+      }
+    },
+    async deleteVoting(state, {votingid}) {
+      await fetch(`/api?action=voting&a=del&t=${votingid}`, {
+        headers: {"Authorization": this.state.token},
+      });
+      this.state.admin.votings = this.state.admin.votings.filter(_voting => {
+        return _voting.Id !== votingid
+      })
     }
   },
   modules: {

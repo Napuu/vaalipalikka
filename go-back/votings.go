@@ -42,14 +42,10 @@ func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 			}
 			_, err = db.Exec("INSERT INTO Voting(name, id, description, open, ended, votespertoken) VALUES(?, ?, ?, ?, ?, ?)", t.Name, t.Id, t.Description, t.Open, t.Ended, t.VotesPerToken)
 			if err != nil {
-				if err.Error() == "UNIQUE constraint failed: Voting.id" {
-					_, err = db.Exec("UPDATE Voting SET name = ?, id = ?, description = ?, open = ?, ended = ?, votespertoken = ?", t.Name, t.Id, t.Description, t.Open, t.Ended, t.VotesPerToken)
-					fmt.Fprint(w, "ok i guess")
-					break
-				} else {
-					log.Fatal(err)
-					break
-				}
+				// TODO - actually check what the error is, now it is assumed to be error with Unique constraint Voting.id
+				_, err = db.Exec("UPDATE Voting SET name = ?, description = ?, open = ?, ended = ?, votespertoken = ? WHERE id = ?", t.Name, t.Description, t.Open, t.Ended, t.VotesPerToken, t.Id)
+				fmt.Fprint(w, "replaced")
+				break
 			}
 			fmt.Fprint(w, "ok i guess")
 		case "show":
