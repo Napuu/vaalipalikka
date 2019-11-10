@@ -2,12 +2,54 @@ import Vue, { VNode } from 'vue'
 
 declare global {
   namespace JSX {
-    // tslint:disable no-empty-interface
     interface Element extends VNode {}
     // tslint:disable no-empty-interface
     interface ElementClass extends Vue {}
     interface IntrinsicElements {
       [elem: string]: any
     }
+  }
+  interface Voting {
+    Name: string
+    Id: string
+    Description: string
+    Open: number
+    Ended: number
+    VotesLeft: number
+    Candidates: Array<Candidate>
+  }
+  interface Candidate {
+    Name: string
+    Id: string
+    Description: string
+    Voted: Boolean
+  }
+  interface Vote {
+    Id: string
+    VotingId: string
+    CandidateId: string
+    Token: string
+  }
+  interface PureVoting {
+    Name: string
+    Id: string
+    Description: string
+    Open: number
+    Ended: number
+    VotesPerToken: number
+  }
+  interface PureCandidate {
+    Name: string
+    Id: string
+    Description: string
+  }
+  interface PureVote extends Vote {}
+  interface PureToken {
+    Value: string
+    Valid: number 
+  }
+  interface PureAvailability {
+    CandidateId: string
+    VotingId: string
   }
 }

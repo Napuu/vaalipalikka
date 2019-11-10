@@ -2,15 +2,15 @@ package main
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
-	"math/rand"
-	"strconv"
-	"time"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	_ "github.com/mattn/go-sqlite3"
 	"log"
+	"math/rand"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func HandleTokenApiQuery(w http.ResponseWriter, r *http.Request) {
@@ -18,7 +18,7 @@ func HandleTokenApiQuery(w http.ResponseWriter, r *http.Request) {
 	db, _ := sql.Open("sqlite3", DB_NAME)
 	action, _ := params["a"]
 	switch strings.Join(action, "") {
-	case "generatetokens":
+	case "generate":
 		_n, nExists := params["n"]
 		var n int
 		if nExists {
@@ -29,7 +29,7 @@ func HandleTokenApiQuery(w http.ResponseWriter, r *http.Request) {
 		newTokens := GenerateTokens(n)
 		InsertNewTokens(newTokens, db)
 		fmt.Fprintf(w, "tokens generated")
-	case "showtokens":
+	case "show":
 		tokens, ok := db.Query("SELECT value, valid FROM Token")
 		var value string
 		var valid int

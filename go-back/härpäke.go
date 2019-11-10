@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const DB_NAME string = "vaalit.db?_foreign_keys=on"
+const DB_NAME string = "vaalit.db"
 
 func main() {
 	switch os.Args[1] {
@@ -32,6 +32,7 @@ func drop(w http.ResponseWriter, r *http.Request) {
 	InitializeDb()
 	fmt.Fprintf(w, "done")
 }
+
 type Token struct {
 	Value string
 	Valid int

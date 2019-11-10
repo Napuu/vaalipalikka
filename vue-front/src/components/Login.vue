@@ -1,8 +1,8 @@
 <template>
   <div v-if="!this.$store.state.authenticated" class="login">
     <div class="loginDescription">Äänestyskoodi: </div>
-    <input v-model="token" type="password" />
-    <button v-on:click="login">Kirjaudu</button>
+    <input class="inputfield" v-model="token" type="password" />
+    <b-button variant="secondary" v-on:click="login">Kirjaudu</b-button>
   </div>
 </template>
 
@@ -24,9 +24,19 @@ export default class Login extends Vue {
         let text = await res.text()
         if (text !== "denied") {
           if (text === "admin") {
+/*
+│  database.Exec("DROP TABLE Token")                
+│  database.Exec("DROP TABLE Availability")                                                        
+│  database.Exec("DROP TABLE Candidate")                           
+│  database.Exec("DROP TABLE Voting")                                    
+*/
             this.$store.commit("login", {role: "admin"})
             this.$router.push("admin")
+            await this.$store.dispatch("fetchAdminViewableData")
           } else {
+            let votings = await fetch("/api?action=voter&a=show", {headers: {"Authorization": this.token}})
+            let votingsJson = await votings.json()
+            this.$store.commit("setVotings", {votings: votingsJson})
             this.$store.commit("login", {role: "voter", token: this.token})
             this.$router.push("voting")
           }
@@ -42,6 +52,9 @@ export default class Login extends Vue {
 <style scoped>
 .login {
   display: flex;
+}
+input {
+  width: 100px;
 }
 h3 {
   margin: 40px 0 0;

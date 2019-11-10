@@ -1,11 +1,10 @@
 <template>
   <div class="token">
     <div v-if="this.$store.state.token !== ''">
-      <button v-on:click="toggle">
+      <b-button variant="primary" v-on:click="toggle">
         <div v-if="this.$store.state.tokenIsVisible">{{this.$store.state.token}}</div>
         <div v-else>{{this.$store.state.token.split("").map(c => "*").join("")}}</div>
-        
-      </button>
+      </b-button>
     </div>
   </div>
 </template>

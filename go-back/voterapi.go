@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	_ "github.com/mattn/go-sqlite3"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type VoterViewableVoting struct {
@@ -17,27 +17,46 @@ type VoterViewableVoting struct {
 	Description   string
 	Open          int
 	Ended         int
-	VotesLeft int
+	VotesLeft     int
 	VotesPerToken int
-	Candidates []VoterViewableCandidates
+	Candidates    []VoterViewableCandidate
 }
-type VoterViewableVotings = []VoterViewableVoting
 
 type VoterViewableCandidate struct {
 	Name        string
 	Id          string
 	Description string
-	Voted bool
-}
-type VoterViewableCandidates = []VoterViewableCandidate
-
-type VoterViewableState struct {
-	Votings []VoterViewableVoting
+	Voted       bool
 }
 
-func constructVoterViewableVoting(votingid string, token string, db: sql.DB) {
-	candidates, err := db.Query("SELECT id, FROM Candidate, Availability WHERE Candidate.id = Availability.candidateid AND Availability.votingid = ?, ", votingid)
-	
+func constructVoterViewableVoting(votingid string, token string, db sql.DB) VoterViewableVoting {
+	candidates, _ := db.Query("SELECT id, name, description FROM Candidate, Availability WHERE Candidate.id = Availability.candidateid AND Availability.votingid = ?", votingid)
+	fmt.Println("constructVoterViewableVoting")
+	candidatesStruct := []VoterViewableCandidate{}
+	votesUsed := 0
+	for candidates.Next() {
+		var candidateid string
+		var candidatename string
+		var candidatedescription string
+		candidates.Scan(&candidateid, &candidatename, &candidatedescription)
+		var votes int
+		voted := false
+		db.QueryRow("SELECT COUNT(*) FROM Vote WHERE votingid = ? AND candidateid = ? AND token = ?", votingid, candidateid, token).Scan(&votes)
+		if votes != 0 {
+			voted = true
+			votesUsed += 1
+		}
+		candidatesStruct = append(candidatesStruct, VoterViewableCandidate{Name: candidatename, Id: candidateid, Description: candidatedescription, Voted: voted})
+	}
+	var name string
+	var id string
+	var description string
+	var open int
+	var ended int
+	var votespertoken int
+	db.QueryRow("SELECT name, id, description, open, ended, votespertoken FROM Voting WHERE id = ?", votingid).Scan(&name, &id, &description, &open, &ended, &votespertoken)
+	votesleft := votespertoken - votesUsed
+	return VoterViewableVoting{Name: name, Id: id, Description: description, Open: open, Ended: ended, VotesLeft: votesleft, VotesPerToken: votespertoken, Candidates: candidatesStruct}
 }
 func HandleVoterApiQuery(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("at voter api")
@@ -45,7 +64,7 @@ func HandleVoterApiQuery(w http.ResponseWriter, r *http.Request) {
 	db, _ := sql.Open("sqlite3", DB_NAME)
 	token := r.Header.Get("Authorization")
 	isVoter := 0
-	db.QueryRow("SELECT COUNT(*) description FROM Token WHERE value = ?", token).Scan(&isVoter)
+	db.QueryRow("SELECT COUNT(*) description FROM Token WHERE value = ? AND valid = 1", token).Scan(&isVoter)
 	if isVoter != 1 {
 		fmt.Fprintf(w, "denied")
 		return
@@ -54,20 +73,13 @@ func HandleVoterApiQuery(w http.ResponseWriter, r *http.Request) {
 	if actionExists {
 		switch strings.Join(action, "") {
 		case "show":
-			var name string
 			var id string
-			var description string
-			var open int
-			var ended int
-			var votesleft int
-			var votespertoken int
-			var votingsStruct = VoterViewableVotings{}
-			//var candidates = Candidates{}
-			votings, err := db.Query("SELECT id FROM Voting WHERE NOT open = 0")
+			var votingsStruct []VoterViewableVoting
+			votings, err := db.Query("SELECT id FROM Voting")
 			if err == nil {
 				for votings.Next() {
 					votings.Scan(&id)
-					constructVoterViewableVoting(id, token)
+					votingsStruct = append(votingsStruct, constructVoterViewableVoting(id, token, *db))
 				}
 			} else {
 				log.Fatal(err)
@@ -78,6 +90,34 @@ func HandleVoterApiQuery(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 			w.Write(votingsJson)
+		case "vote":
+			body, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				fmt.Fprint(w, "err")
+				break
+			}
+			var t Vote
+			err = json.Unmarshal(body, &t)
+			if err != nil || t.Id == "" || t.VotingId == "" || t.Token == "" {
+				fmt.Fprint(w, "malformed json")
+				break
+			}
+			var currentVotes int
+			var allowedVotes int
+			db.QueryRow("SELECT COUNT(*) FROM Vote WHERE token = ? AND votingId = ?", t.Token, t.VotingId).Scan(&currentVotes)
+			db.QueryRow("SELECT votesPerToken FROM Voting WHERE id = ?", t.VotingId).Scan(&allowedVotes)
+			if currentVotes < allowedVotes {
+				_, err := db.Exec("INSERT INTO Vote(id, votingId, candidateId, token) VALUES(?, ?, ?, ?)", t.Id, t.VotingId, t.CandidateId, t.Token)
+				if err != nil {
+					fmt.Println(err)
+					fmt.Fprintf(w, "nonexisting candidate/voting/token")
+					break
+				}
+				fmt.Fprint(w, "ok i guess")
+			} else {
+				fmt.Fprintf(w, "already voted")
+			}
+
 		default:
 			fmt.Fprint(w, "unknown action")
 		}

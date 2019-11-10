@@ -1,21 +1,21 @@
-
 package main
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	_ "github.com/mattn/go-sqlite3"
+	"io/ioutil"
 	"log"
 	"net/http"
-	"io/ioutil"
 	"strings"
 )
 
 type Availability struct {
 	CandidateId string
-	VotingId            string
+	VotingId    string
 }
+type Availabilities = []Availability
 
 func HandleAvailabilityApiQuery(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
@@ -40,8 +40,26 @@ func HandleAvailabilityApiQuery(w http.ResponseWriter, r *http.Request) {
 			log.Panic(err)
 		}
 		fmt.Fprint(w, "ok i guess")
-	// case "del":
+	case "show":
+		availabilities, ok := db.Query("SELECT candidateid, votingid FROM Availability")
+		var candidateid string
+		var votingid string
+		var availabilitiesStruct = Availabilities{}
+		if ok == nil {
+			for availabilities.Next() {
+				availabilities.Scan(&candidateid, &votingid)
+				availabilitiesStruct = append(availabilitiesStruct, Availability{candidateid, votingid})
+			}
+		} else {
+			log.Fatal(ok)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		availabilitiesJson, err := json.Marshal(availabilitiesStruct)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w.Write(availabilitiesJson)
+		// case "del":
 
 	}
 }
-

@@ -35,22 +35,20 @@ func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 			}
 			var t Voting
 			err = json.Unmarshal(body, &t)
-			if err != nil || t.Description == "" || t.Name == "" || t.Id == "" {
+			if err != nil || t.Name == "" || t.Id == "" {
 				fmt.Println(err)
 				fmt.Fprint(w, "malformed json")
 				break
 			}
 			_, err = db.Exec("INSERT INTO Voting(name, id, description, open, ended, votespertoken) VALUES(?, ?, ?, ?, ?, ?)", t.Name, t.Id, t.Description, t.Open, t.Ended, t.VotesPerToken)
 			if err != nil {
-				fmt.Println("name", t.Name, "id",  t.Id, "desc", t.Description, "open",  t.Open, "ended", t.Ended, "vpt", t.VotesPerToken)
-				log.Fatal(err)
-			}
-			if err != nil {
 				if err.Error() == "UNIQUE constraint failed: Voting.id" {
-					fmt.Fprint(w, "voting already exists")
+					_, err = db.Exec("UPDATE Voting SET name = ?, id = ?, description = ?, open = ?, ended = ?, votespertoken = ?", t.Name, t.Id, t.Description, t.Open, t.Ended, t.VotesPerToken)
+					fmt.Fprint(w, "ok i guess")
 					break
 				} else {
 					log.Fatal(err)
+					break
 				}
 			}
 			fmt.Fprint(w, "ok i guess")
