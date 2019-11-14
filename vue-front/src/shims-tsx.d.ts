@@ -9,6 +9,9 @@ declare global {
       [elem: string]: any
     }
   }
+  interface VotingStatusMap {
+    [CandidateId: string]: PureVote[]
+  }
   interface Voting {
     Name: string
     Id: string
@@ -46,7 +49,7 @@ declare global {
   interface PureVote extends Vote {}
   interface PureToken {
     Value: string
-    Valid: number 
+    Valid: number
   }
   interface PureAvailability {
     CandidateId: string

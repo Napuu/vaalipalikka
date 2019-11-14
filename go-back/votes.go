@@ -22,6 +22,7 @@ type Votes = []Vote
 func HandleVoteApiQuery(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	db, _ := sql.Open("sqlite3", DB_NAME)
+	db.Exec("PRAGMA foreign_keys = ON")
 	action, actionExists := params["a"]
 	if actionExists {
 		switch strings.Join(action, "") {

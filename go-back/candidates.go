@@ -25,6 +25,7 @@ type Candidates = []Candidate
 func HandleCandidateApiQuery(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	db, _ := sql.Open("sqlite3", DB_NAME)
+	db.Exec("PRAGMA foreign_keys = ON")
 	action, actionExists := params["a"]
 	fmt.Println("adding candidate ???")
 	if actionExists {
@@ -40,7 +41,7 @@ func HandleCandidateApiQuery(w http.ResponseWriter, r *http.Request) {
 			}
 			var t Candidate
 			err = json.Unmarshal(body, &t)
-			if err != nil || t.Description == "" || t.Name == "" || t.Id == "" {
+			if err != nil || t.Name == "" || t.Id == "" {
 				fmt.Println("json")
 				fmt.Println(err)
 				fmt.Fprint(w, "malformed json")
@@ -49,7 +50,10 @@ func HandleCandidateApiQuery(w http.ResponseWriter, r *http.Request) {
 			_, err = db.Exec("INSERT INTO Candidate(name, id, description) VALUES(?, ?, ?)", t.Name, t.Id, t.Description)
 			if err != nil {
 				if err.Error() == "UNIQUE constraint failed: Candidate.id" {
-					fmt.Fprint(w, "candidate already exists")
+					// fmt.Fprint(w, "candidate already exists")
+					_, err2 := db.Exec("UPDATE Candidate SET name = ?, description = ? WHERE id = ?", t.Name, t.Description, t.Id)
+					fmt.Println(err2)
+					fmt.Fprintf(w, "replaced")
 					break
 				} else {
 					log.Fatal(err)
@@ -98,10 +102,11 @@ func HandleCandidateApiQuery(w http.ResponseWriter, r *http.Request) {
 			target, targetExists := params["t"]
 			if targetExists {
 				_, err := db.Exec("DELETE FROM Candidate WHERE id = ?", strings.Join(target, ""))
-				if err != nil {
+				if err == nil {
 					fmt.Fprint(w, "deleted")
 				} else {
 					fmt.Fprint(w, "something went wrong while deleting candidate")
+					fmt.Println(err)
 				}
 			}
 		default:

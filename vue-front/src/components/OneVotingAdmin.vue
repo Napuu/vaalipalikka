@@ -3,106 +3,129 @@
   <div class="onevoting">
     <div class="col1">
       <div class="valueholder">
-        <div class="title">Id</div> 
-        <div class="value">{{voting.Id}}</div>
-      </div>
-      <div class="valueholder">
-        <div class="title">Nimi</div> 
+        <div class="title">Nimi</div>
         <div v-if="state.admin.editableVoting.Id !== voting.Id" class="value">{{voting.Name}}</div>
-        <b-form-input v-else v-model="_name" />
+        <b-form-input v-else v-model="name" />
       </div>
       <div class="valueholder">
-        <div class="title">Avoinna</div> 
+        <div class="title">Avoinna</div>
         <div v-if="state.admin.editableVoting.Id !== voting.Id" class="value">{{voting.Open}}</div>
         <b-form-select v-else v-model="open" :options="openOptions"/>
       </div>
       <div class="valueholder">
-        <div class="title">Päättynyt</div> 
+        <div class="title">Päättynyt</div>
         <div v-if="state.admin.editableVoting.Id !== voting.Id" class="value">{{voting.Ended}}</div>
         <b-form-select v-else v-model="ended" :options="endedOptions"/>
       </div>
       <div class="valueholder">
-        <div class="title">Sallitut äänet</div> 
+        <div class="title">Sallitut äänet</div>
         <div v-if="state.admin.editableVoting.Id !== voting.Id" class="value">{{voting.VotesPerToken}}</div>
         <b-form-input v-else v-model="votespertoken" type="number"/>
       </div>
+      <div class="candidates valueholder">
+        <div class="title">Ehdokkaat</div>
+        <div v-if="state.admin.editableVoting.Id !== voting.Id" class="value">{{candidatesSelected.map(a => a.Name).join(", ") }}</div>
+        <Multiselect v-else v-model="candidatesSelected" :options="candidates" :searchable="false" :multiple="true" :close-on-select="false" :clear-on-select="false"  label="Name" track-by="Id">
+          <template slot="selection" >
+            <span class="multiselect__single" v-if="candidatesSelected.length && !isOpen">{{ candidatesSelected.map(a => a.Name).join(", ") }}</span>
+          </template>
+        </Multiselect>
+      </div>
     </div>
     <div class="col2">
-      <b-button variant="warning" v-on:click="modify">M</b-button>
-      <b-button variant="info" v-on:click="update">T</b-button>
-      <b-button variant="danger" v-on:click="_delete">P</b-button>
+      <EditButtons @modify="modify" @delete="_delete" @update="update" />
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
+import 'vue-multiselect/dist/vue-multiselect.min.css'
+import store from '@/store';
+import { BvModal } from 'bootstrap-vue';
+import Multiselect from 'vue-multiselect';
+import EditButtons from '@/components/EditButtonsAdmin.vue'
     /* eslint-disable no-alert, no-console */
-@Component
-export default class OneVotingAdmin extends Vue {
-  @Prop() private voting!: PureVoting;
-  public name: string = "OneVotingAdmin"
-  private _name: string = "";
-  private id: string = "";
-  private open: number = 0;
-  private ended: number = 0;
-  private votespertoken: number = 0;
+export default {
   // delete seems to be reserved keyword
-  private _delete() {
-    this.$bvModal.msgBoxConfirm(`Poista äänestys "${this.voting.Name}"`, {
-      okTitle: 'Ok',
-      cancelTitle: 'Peruuta',
-    })
+  methods: {
+    modify() {
+      this.name = this.voting.Name
+      this.id = this.voting.Id
+      this.open = this.voting.Open
+      this.ended = this.voting.Ended
+      this.votespertoken = this.voting.VotesPerToken
+      this.$store.commit("setEditableVoting", {voting: this.voting})
+    },
+    async update() {
+      store.commit("clearEditableVotingTarget")
+      store.dispatch("addOrUpdateVoting", {voting: {
+        name: this.name,
+        id: (this.id === "" ? (new Date().getTime()).toString() : this.id),
+        open: this.open,
+        ended: this.ended,
+        votespertoken: this.votespertoken
+      }})
+      store.dispatch("clearAndAddAvailabilities", {votingid: this.voting.Id, candidates: this.candidatesSelected})
+    },
+    async _delete() {
+      this.$bvModal.msgBoxConfirm(`Poista äänestys "${this.voting.Name}"`, {
+        okTitle: 'Ok',
+        cancelTitle: 'Peruuta',
+      })
       .then(value => {
         if (value) {
           this.$store.dispatch("deleteVoting", {votingid: this.voting.Id})
         }
       })
-  }
-  private state = this.$store.state;
-  private modify() {
-    this._name = this.voting.Name
-    this.id = this.voting.Id
-    this.open = this.voting.Open
-    this.ended = this.voting.Ended
-    this.votespertoken = this.voting.VotesPerToken
-    this.$store.commit("setEditableVoting", {voting: this.voting})
-  }
-  private async update() {
-    this.$store.dispatch("addOrUpdateVoting", {voting: {
-      name: this._name, 
-      id: this.id,
-      open: this.open,
-      ended: this.ended,
-      votespertoken: this.votespertoken
-    }})
-    this.$store.commit("clearEditableVotingTarget")
-  }
+    }
+  },
+  props: [
+    'voting'
+  ],
   data() {
     return {
+      name: "",
+      id: "",
+      open: 0,
+      ended: 0,
+      votespertoken: 0,
+      state: store.state,
       openOptions: [
         { value: 1, text: "Kyllä" },
         { value: 0, text: "Ei" }
+      ],
+      candidatesSelected: store.state.admin.candidates.filter((a: PureCandidate) => {
+        let availabilities = store.state.admin.availabilities
+        return availabilities.find((b: PureAvailability) => b.VotingId === this.voting.Id && b.CandidateId === a.Id)
+      }),
+      candidates: [
+        ...store.state.admin.candidates.map((a: PureCandidate) => {return {Id: a.Id, Name: a.Name}})
       ],
       endedOptions: [
         { value: 1, text: "Kyllä" },
         { value: 0, text: "Ei" }
       ]
     }
+  },
+  components: {
+    Multiselect,
+    EditButtons
   }
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.candidates {
+  width: 400px;
+}
 .valueholder {
   padding: 3px;
   padding-left: 6px;
   padding-right: 6px;
   margin-right: -1px;
   border: 1px solid black;
-}
-.candidateListing {
 }
 .col1 {
   display: flex;
@@ -116,13 +139,10 @@ export default class OneVotingAdmin extends Vue {
   max-width: 33%;
   min-width: 33%;
 }
-.button {
-  margin-bottom: 3px;
-}
 #title {
   background: grey;
   color: white;
-  /* shifting a bit right ":D" 
+  /* shifting a bit right ":D"
   margin-left: 3px;
   margin-right: -3px;
   */

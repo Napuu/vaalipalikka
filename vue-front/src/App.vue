@@ -39,7 +39,6 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
     /* eslint-disable no-alert, no-console */
-import Login from '@/components/Login.vue'
 
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
@@ -49,7 +48,7 @@ for (i = 0; i < x.length; i++) {
   x[i].addEventListener("touchstart", (ev) => {
     console.log("vittu touch start")
   })
-} 
+}
 @Component
 export default class App extends Vue {
   @Prop() private msg!: string;
@@ -68,12 +67,15 @@ export default class App extends Vue {
   }
   private async mounted() {
     console.log("here we go")
-    let votings = await fetch("/api?action=voter&a=show", {headers: {"Authorization": "123"}})
-    let votingsJson = await votings.json()
-    if (votingsJson.indexOf("denied") !== -1) this.logout()
-    this.$store.commit("setVotings", {votings: votingsJson})
-    this.$store.commit("login", {role: "admin", token: "123"})
-    this.$router.push("voting")
+    // let votings = await fetch("/api?action=voter&a=show", {headers: {"Authorization": "123"}})
+    // let votingsJson = await votings.json()
+    // if (votingsJson.indexOf("denied") !== -1) this.logout()
+    // this.$store.commit("setVotings", {votings: votingsJson})
+    // this.$store.commit("login", {role: "admin", token: "123"})
+    // this.$router.push("voting")
+    if (window.localStorage.getItem("token") !== null) {
+      this.$store.dispatch("login", {token: window.localStorage.getItem("token")})
+    }
   }
   private logout() {
     this.$store.commit('logout')

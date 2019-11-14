@@ -1,7 +1,7 @@
 <template>
   <div v-if="!this.$store.state.authenticated" class="login">
     <div class="loginDescription">Äänestyskoodi: </div>
-    <input class="inputfield" v-model="token" type="password" />
+    <b-input class="inputfield" v-model="token" type="password" />
     <b-button variant="secondary" v-on:click="login">Kirjaudu</b-button>
   </div>
 </template>
@@ -24,13 +24,7 @@ export default class Login extends Vue {
         let text = await res.text()
         if (text !== "denied") {
           if (text === "admin") {
-/*
-│  database.Exec("DROP TABLE Token")                
-│  database.Exec("DROP TABLE Availability")                                                        
-│  database.Exec("DROP TABLE Candidate")                           
-│  database.Exec("DROP TABLE Voting")                                    
-*/
-            this.$store.commit("login", {role: "admin"})
+            this.$store.commit("login", {role: "admin", token: this.token})
             this.$router.push("admin")
             await this.$store.dispatch("fetchAdminViewableData")
           } else {
@@ -40,6 +34,7 @@ export default class Login extends Vue {
             this.$store.commit("login", {role: "voter", token: this.token})
             this.$router.push("voting")
           }
+          window.localStorage.setItem("token", this.token)
         }
         this.token = ""
       })
@@ -50,6 +45,12 @@ export default class Login extends Vue {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.loginDescription {
+  color: lightgrey;
+  font-size: 120%;
+  padding-top: 7px;
+  padding-right: 10px;
+}
 .login {
   display: flex;
 }

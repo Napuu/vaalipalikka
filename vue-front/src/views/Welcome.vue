@@ -1,7 +1,7 @@
 
 <template>
   <div class="welcome">
-    vaalikonesysteemi. syötä äänestyskoodisi kirjautuaksesi sisään
+    Syötä äänestyskoodi kirjautuaksesi sisään
   </div>
 </template>
 
@@ -15,3 +15,10 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.welcome {
+  padding-top: 10px;
+  font-size: 160%;
+}
+</style>
