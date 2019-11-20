@@ -15,7 +15,6 @@ import (
 
 func HandleTokenApiQuery(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
-	db, _ := sql.Open("postgres", CONNECTION_STRING)
 	action, _ := params["a"]
 	switch strings.Join(action, "") {
 	case "generate":

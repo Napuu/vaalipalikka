@@ -3,14 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	//"net/url"
+	"database/sql"
 	"os"
 	"strings"
 )
 
 const DB_NAME string = "vaalit.db"
 const CONNECTION_STRING string = "postgres://vaalit:vaalit@localhost:5444/vaalit"
+
+var db *sql.DB
 
 func main() {
 	switch os.Args[1] {
@@ -23,6 +27,11 @@ func main() {
 		GenerateTokens(1000)
 	}
 	fmt.Println("opening database")
+	var err error
+	db, err = sql.Open("postgres", CONNECTION_STRING)
+	if err != nil {
+		log.Fatal("error connecting to postgres")
+	}
 	http.HandleFunc("/", HelloServer)
 	http.HandleFunc("/drop", drop)
 	http.HandleFunc("/api", HandleApiQuery)

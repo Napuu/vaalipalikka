@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	_ "github.com/lib/pq"
@@ -19,8 +18,6 @@ type Availabilities = []Availability
 
 func HandleAvailabilityApiQuery(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
-	db, _ := sql.Open("postgres", CONNECTION_STRING)
-	//db.Exec("PRAGMA foreign_keys = ON")
 	action, _ := params["a"]
 	switch strings.Join(action, "") {
 	case "add":

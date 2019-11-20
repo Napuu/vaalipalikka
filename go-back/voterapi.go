@@ -61,7 +61,6 @@ func constructVoterViewableVoting(votingid string, token string, db sql.DB) Vote
 func HandleVoterApiQuery(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("at voter api")
 	params := r.URL.Query()
-	db, _ := sql.Open("postgres", CONNECTION_STRING)
 	token := r.Header.Get("Authorization")
 	isVoter := 0
 	db.QueryRow("SELECT COUNT(*) description FROM Token WHERE value = $1 AND valid = 1", token).Scan(&isVoter)

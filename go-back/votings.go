@@ -23,7 +23,6 @@ type Votings = []Voting
 
 func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
-	db, _ := sql.Open("postgres", CONNECTION_STRING)
 	action, actionExists := params["a"]
 	if actionExists {
 		switch strings.Join(action, "") {

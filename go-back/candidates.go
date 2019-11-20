@@ -24,8 +24,6 @@ type Candidates = []Candidate
 
 func HandleCandidateApiQuery(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
-	db, _ := sql.Open("postgres", CONNECTION_STRING)
-	//db.Exec("PRAGMA foreign_keys = ON")
 	action, actionExists := params["a"]
 	fmt.Println("adding candidate ???")
 	if actionExists {
