@@ -43,7 +43,7 @@ export default new Vuex.Store({
       state.role = ""
       state.token = ""
     },
-    setVotings(state, {votings}) {
+    setNonAdminVotings(state, {votings}) {
       state.votings = votings
     },
     setProbableVotingTarget(state, {votingid, candidateid}) {
@@ -57,23 +57,33 @@ export default new Vuex.Store({
     toggleTokenVisibility(state) {
       state.tokenIsVisible = !state.tokenIsVisible
     },
-    setEditableVoting(state, {voting}) {
-      state.admin.editableVoting = voting
-    },
     clearEditableVotingTarget(state) {
       state.admin.editableVoting = <PureVoting>{}
     },
     addVoting(state, {voting}) {
       state.admin.votings.push(voting)
-      state.admin.editableVoting = voting
     },
     addCandidate(state, {candidate}) {
       state.admin.candidates.push(candidate)
-      state.admin.editableCandidate = candidate
     },
     addAvailability(state, {availability}) {
       state.admin.availabilities.push(availability)
       state.admin.editableAvailability = availability
+    },
+    setVotings(state, payload: {votings: Array<PureVoting>}) {
+      state.admin.votings = payload.votings
+    },
+    setCandidates(state, payload: {candidates: Array<PureCandidate>}) {
+      state.admin.candidates = payload.candidates
+    },
+    setTokens(state, payload: {tokens: Array<PureToken>}) {
+      state.admin.tokens = payload.tokens
+    },
+    setVotes(state, payload: {votes: Array<PureVote>}) {
+      state.admin.votes = payload.votes
+    },
+    setAvailabilities(state, payload: {availabilities: Array<PureAvailability>}) {
+      state.admin.availabilities = payload.availabilities
     },
     setActiveAdminTab(state, {tab}) {
       state.admin.activeTab = tab
@@ -87,11 +97,57 @@ export default new Vuex.Store({
     setEditableToken(state, {token}) {
       state.admin.editableToken =token
     },
+    setEditableVoting(state, {voting}) {
+      state.admin.editableVoting = voting
+    },
     clearEditableCandidateTarget(state) {
       state.admin.editableCandidate = <PureCandidate>{}
     },
-    setAvailabilities(state, {availabilities}) {
-      state.admin.availabilities = availabilities
+    updateCandidate(state, payload: {newCandidate: PureCandidate}) {
+      state.admin.candidates = state.admin.candidates.map((_candidate) => {
+        if (_candidate.Id == payload.newCandidate.Id) return payload.newCandidate
+        else return _candidate
+      })
+    },
+    updateVoting(state, payload: {newVoting: PureVoting}) {
+      state.admin.votings = state.admin.votings.map((_voting) => {
+        if (_voting.Id == payload.newVoting.Id) return payload.newVoting
+        else return _voting
+      })
+    },
+    updateAvailability(state, payload: {newAvailability: PureAvailability}) {
+      state.admin.availabilities = state.admin.availabilities.map((_availability) => {
+        if (_availability.CandidateId == payload.newAvailability.CandidateId && 
+          _availability.VotingId == payload.newAvailability.VotingId) {
+          return payload.newAvailability
+        } 
+        else return _availability
+      })
+    },
+    updateToken(state, payload: {newToken: PureToken}) {
+      state.admin.tokens = state.admin.tokens.map((_token) => {
+        if (_token.Value == payload.newToken.Value) return payload.newToken
+        else return _token
+      })
+    },
+    toggleToken(state, payload: {togglableTokenValue: string}) {
+      state.admin.tokens = state.admin.tokens.map((token: PureToken) => {
+        let t = token
+        if (token.Value === payload.togglableTokenValue) {
+          if (t.Valid === 0) t.Valid = 1
+          else t.Valid = 0
+        }
+        return t
+      })
+    },
+    deleteCandidate(state, payload: {deletableCandidateId: string}) {
+      state.admin.candidates = state.admin.candidates.filter(_candidate => _candidate.Id !== payload.deletableCandidateId)
+    },
+    deleteVoting(state, payload: {deletableVotingId: string}) {
+      state.admin.votings = state.admin.votings.filter(_voting => _voting.Id !== payload.deletableVotingId)
+    },
+    deleteToken(state, payload: {deletableTokenValue: string}) {
+      state.admin.tokens = state.admin.tokens.filter((_token: PureToken) => _token.Value !== payload.deletableTokenValue)
     },
     clearEditableAvailabilityTarget(state) {
       state.admin.editableAvailability = <PureAvailability>{}
@@ -101,57 +157,59 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    async login(state, {token}) {
+    async login({commit, dispatch}, {token}) {
       fetch("/api?action=login", {headers: {"Authorization": token}}).then(async res => {
         let text = await res.text()
         if (text !== "denied") {
           if (text === "admin") {
-            this.commit("login", {role: "admin", token: token})
+            commit("login", {role: "admin", token: token})
             router.push("admin")
-            await this.dispatch("fetchAdminViewableData")
+            dispatch("fetchAdminViewableData")
           } else {
             let votings = await fetch("/api?action=voter&a=show", {headers: {"Authorization": token}})
             let votingsJson = await votings.json()
-            this.commit("setVotings", {votings: votingsJson})
-            this.commit("login", {role: "voter", token: token})
+            commit("login", {role: "voter", token: token})
+            commit("setNonAdminVotings", {votings: votingsJson})
             router.push("voting")
           }
           window.localStorage.setItem("token", token)
         }
       })
     },
-    async fetchAdminViewableData(state): Promise<Boolean> {
-      let options = {headers: {"Authorization": this.state.token}}
-      this.dispatch("fetchVotes", {options})
-      this.dispatch("fetchCandidates", {options})
-      this.dispatch("fetchTokens", {options})
-      this.dispatch("fetchVotings", {options})
-      this.dispatch("fetchAvailabilities", {options})
-      return true
+    async fetchAdminViewableData({dispatch, state}){
+      let options = {headers: {"Authorization": state.token}}
+      dispatch("fetchVotes", {options})
+      dispatch("fetchCandidates", {options})
+      dispatch("fetchTokens", {options})
+      dispatch("fetchVotings", {options})
+      dispatch("fetchAvailabilities", {options})
     },
-    async fetchVotes(state, {options}) {
+    async fetchVotes({commit}, {options}) {
       let _votes = await fetch("/api?action=vote&a=show", options)
-      this.state.admin.votes = await _votes.json()
+      let votes = await _votes.json()
+      commit("setVotes", {votes})
     },
-    async fetchCandidates(state, {options}) {
+    async fetchCandidates({commit}, {options}) {
       let _candidates= await fetch("/api?action=candidate&a=show", options)
-      this.state.admin.candidates = await _candidates.json()
+      let candidates = await _candidates.json()
+      commit("setCandidates", {candidates})
     },
-    async fetchTokens(state, {options}) {
+    async fetchTokens({commit}, {options}) {
       let _tokens = await fetch("/api?action=token&a=show", options)
-      this.state.admin.tokens = await _tokens.json()
+      let tokens = await _tokens.json()
+      commit("setTokens", {tokens})
     },
-    async fetchVotings(state, {options}) {
+    async fetchVotings({commit}, {options}) {
       let _votings = await fetch("/api?action=voting&a=show", options)
-      this.state.admin.votings = await _votings.json()
+      let votings = await _votings.json()
+      commit("setVotings", {votings})
     },
-    async fetchAvailabilities(state, {options}) {
+    async fetchAvailabilities({commit}, {options}) {
       let _availability = await fetch("/api?action=availability&a=show", options)
-      this.state.admin.availabilities = await _availability.json()
-      // let a = await _availability.json()
-      // state.commit("setAvailabilities", a)
+      let availabilities = await _availability.json()
+      commit("setAvailabilities", {availabilities})
     },
-    async addOrUpdateVoting(state, {voting}) {
+    async addOrUpdateVoting({state}, {voting}) {
       let newVoting: PureVoting = {
         Name: voting.name,
         Id: voting.id,
@@ -161,13 +219,13 @@ export default new Vuex.Store({
         VotesPerToken: parseInt(voting.votespertoken)
       }
       let answer = await fetch("/api?action=voting&a=add", {
-        headers: {"Authorization": this.state.token},
+        headers: {"Authorization": state.token},
         method: "POST",
         body: JSON.stringify(newVoting)
       })
       let answerText = await answer.text()
       if (answerText.indexOf("replaced") !== -1) {
-        this.state.admin.votings = this.state.admin.votings.map(_voting => {
+        state.admin.votings = state.admin.votings.map(_voting => {
           if (_voting.Id == voting.id) {
             return newVoting
           } else {
@@ -175,123 +233,99 @@ export default new Vuex.Store({
           }
         })
       } else {
-        this.state.admin.votings.push(newVoting)
+        state.admin.votings.push(newVoting)
       }
     },
-    async addOrUpdateCandidate(state, {candidate}) {
+    async addOrUpdateCandidate({commit, state}, {candidate}) {
       let newCandidate: PureCandidate = {
         Name: candidate.name,
         Id: candidate.id,
         Description: "",
       }
       let answer = await fetch("/api?action=candidate&a=add", {
-        headers: {"Authorization": this.state.token},
+        headers: {"Authorization": state.token},
         method: "POST",
         body: JSON.stringify(newCandidate)
       })
       let answerText = await answer.text()
       if (answerText.indexOf("replaced") !== -1) {
-        this.state.admin.candidates = this.state.admin.candidates.map(_candidate => {
-          if (_candidate.Id == candidate.id) {
-            return newCandidate
-          } else {
-            return _candidate
-          }
-        })
+        commit("updateCandidate", {newCandidate})
       } else {
-        this.state.admin.candidates.push(newCandidate)
+        state.admin.candidates.push(newCandidate)
       }
     },
-    async addOrUpdateAvailability(state, {availability}) {
+    async addOrUpdateAvailability({state, commit}, {availability}) {
       let newAvailability: PureAvailability = {
         CandidateId: availability.candidateid,
         VotingId: availability.votingid
       }
       let answer = await fetch("/api?action=availability&a=add", {
-        headers: {"Authorization": this.state.token},
+        headers: {"Authorization": state.token},
         method: "POST",
         body: JSON.stringify(newAvailability)
       })
       let answerText = await answer.text()
       if (answerText.indexOf("replaced") !== -1) {
-        this.state.admin.availabilities = this.state.admin.availabilities.map(_availability => {
-          if (_availability.CandidateId == availability.CandidateId && _availability.VotingId == availability.VotingId) {
-            return newAvailability
-          } else {
-            return _availability
-          }
-        })
+        commit("updateAvailability", {newAvailability})
       } else {
-        this.state.admin.availabilities.push(newAvailability)
+        state.admin.availabilities.push(newAvailability)
       }
     },
 
-    async deleteVoting(state, {votingid}) {
+    async deleteVoting({commit, state}, {votingid}) {
       await fetch(`/api?action=voting&a=del&t=${votingid}`, {
-        headers: {"Authorization": this.state.token},
+        headers: {"Authorization": state.token},
       });
-      this.state.admin.votings = this.state.admin.votings.filter(_voting => {
-        return _voting.Id !== votingid
-      })
+      commit("deleteVoting", {deletableVotingId: votingid})
     },
-    async deleteCandidate(state, {candidateid}) {
+    async deleteCandidate({commit, state}, {candidateid}) {
       await fetch(`/api?action=candidate&a=del&t=${candidateid}`, {
-        headers: {"Authorization": this.state.token},
+        headers: {"Authorization": state.token},
       });
-      this.state.admin.candidates = this.state.admin.candidates.filter(_candidate => {
-        return _candidate.Id !== candidateid
-      })
+      commit("deleteCandidate", {deletableCandidateId: candidateid})
     },
-    async deleteToken(state, {tokenvalue}) {
-      await fetch(`/api?action=candidate&a=del&t=${tokenvalue}`, {
-        headers: {"Authorization": this.state.token},
-      });
-      this.state.admin.tokens = this.state.admin.tokens.filter(_token => {
-        return _token.Value !== tokenvalue
-      })
-    },
-    async clearAndAddAvailabilities(state, {votingid, candidates}) {
+    // unused but working
+    // async deleteToken(state, {tokenvalue}) {
+    //   await fetch(`/api?action=token&a=del&t=${tokenvalue}`, {
+    //     headers: {"Authorization": this.state.token},
+    //   });
+    //   commit("deleteToken", {deletableTokenValue: tokenvalue})
+    // },
+    async clearAndAddAvailabilities({state}, {votingid, candidates}) {
       let pairs = candidates.map((a: PureCandidate) => { return {CandidateId: a.Id, VotingId: votingid}})
       await fetch(`/api?action=availability&a=clearadd`, {
-        headers: {"Authorization": this.state.token},
+        headers: {"Authorization": state.token},
         body: JSON.stringify(pairs),
         method: "POST"
       });
 
     },
-    async toggleToken(state, {tokenvalue}) {
+    async toggleToken({commit, state}, {tokenvalue}) {
       console.log("tokenvalue", tokenvalue)
-      let targetToken: any= this.state.admin.tokens.filter(a => a.Value === tokenvalue)
+      let targetToken: any = state.admin.tokens.filter(a => a.Value === tokenvalue)
       console.log("token" + targetToken)
       console.log("???")
       targetToken = targetToken[0]
       if (targetToken.Valid === 0) {
         await fetch(`/api?action=token&a=toggle&t=${tokenvalue}&v=1`, {
-          headers: {"Authorization": this.state.token}
+          headers: {"Authorization": state.token}
         })
       } else {
         await fetch(`/api?action=token&a=toggle&t=${tokenvalue}&v=0`, {
-          headers: {"Authorization": this.state.token}
+          headers: {"Authorization": state.token}
         })
       }
-      this.state.admin.tokens = this.state.admin.tokens.map((token: PureToken) => {
-        let t = token
-        if (token.Value === tokenvalue) {
-          if (t.Valid === 0) t.Valid = 1
-          else t.Valid = 0
-        }
-        return t
-      })
+      commit("toggleToken", {togglableTokenValue: tokenvalue}) 
     },
-    async generateTokens(state) {
-      if (this.state.role === "admin") {
+
+    async generateTokens({state, commit}) {
+      if (state.role === "admin") {
         await fetch("api?action=token&a=generate")
-        // use actual action
-
-        let options = {headers: {"Authorization": this.state.token}}
-        let _tokens = await fetch("/api?action=token&a=show", options)
-        this.state.admin.tokens = await _tokens.json()
-
+        let _tokens = await fetch("/api?action=token&a=show", {
+          headers: {"Authorization": state.token}
+        })
+        let tokens = await _tokens.json()
+        commit("setTokens", {tokens})
       }
     }
   },
