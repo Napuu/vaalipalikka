@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -23,8 +23,7 @@ type Votings = []Voting
 
 func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
-	db, _ := sql.Open("sqlite3", DB_NAME)
-	db.Exec("PRAGMA foreign_keys = ON")
+	db, _ := sql.Open("postgres", CONNECTION_STRING)
 	action, actionExists := params["a"]
 	if actionExists {
 		switch strings.Join(action, "") {
@@ -41,17 +40,13 @@ func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprint(w, "malformed json")
 				break
 			}
-			_, err = db.Exec("INSERT INTO Voting(name, id, description, open, ended, votespertoken) VALUES(?, ?, ?, ?, ?, ?)", t.Name, t.Id, t.Description, t.Open, t.Ended, t.VotesPerToken)
+			fmt.Println("trying")
+			_, err = db.Exec("INSERT INTO Voting(name, id, description, open, ended, votespertoken) VALUES($1, $2, $3, $4, $5, $6)", t.Name, t.Id, t.Description, t.Open, t.Ended, t.VotesPerToken)
 			if err != nil {
-				if err.Error() == "UNIQUE constraint failed: Voting.id" {
-					_, err2 := db.Exec("UPDATE Voting SET name = ?, description = ?, open = ?, ended = ?, votespertoken = ? WHERE id = ?", t.Name, t.Description, t.Open, t.Ended, t.VotesPerToken, t.Id)
-					fmt.Println(err2)
-					fmt.Fprint(w, "replaced")
-					break
-				} else {
-					log.Fatal(err)
-					break
-				}
+				_, err2 := db.Exec("UPDATE Voting SET name = $1, description = $2, open = $3, ended = $4, votespertoken = $5 WHERE id = $6", t.Name, t.Description, t.Open, t.Ended, t.VotesPerToken, t.Id)
+				fmt.Println(err2)
+				fmt.Fprint(w, "replaced")
+				break
 			}
 			fmt.Fprint(w, "ok i guess")
 		case "show":
@@ -77,6 +72,8 @@ func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 				votingsJson, err := json.Marshal(votingsStruct)
 				if err != nil {
 					log.Fatal(err)
+					fmt.Fprintf(w, "malformed json")
+					break
 				}
 				w.Write(votingsJson)
 			} else {
@@ -86,7 +83,7 @@ func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 				var open int
 				var ended int
 				var votespertoken int
-				row := db.QueryRow("SELECT name, id, description FROM Voting WHERE id = ?", strings.Join(target, ""))
+				row := db.QueryRow("SELECT name, id, description FROM Voting WHERE id = $1", strings.Join(target, ""))
 				switch err := row.Scan(&name, &id, &description); err {
 				case sql.ErrNoRows:
 					fmt.Fprint(w, "no votings matching that id")
@@ -101,7 +98,7 @@ func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 		case "del":
 			target, targetExists := params["t"]
 			if targetExists {
-				_, err := db.Exec("DELETE FROM Voting WHERE id = ?", strings.Join(target, ""))
+				_, err := db.Exec("DELETE FROM Voting WHERE id = $1", strings.Join(target, ""))
 				if err == nil {
 					fmt.Fprint(w, "deleted")
 				} else {

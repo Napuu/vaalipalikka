@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -30,7 +30,7 @@ type VoterViewableCandidate struct {
 }
 
 func constructVoterViewableVoting(votingid string, token string, db sql.DB) VoterViewableVoting {
-	candidates, _ := db.Query("SELECT id, name, description FROM Candidate, Availability WHERE Candidate.id = Availability.candidateid AND Availability.votingid = ?", votingid)
+	candidates, _ := db.Query("SELECT id, name, description FROM Candidate, Availability WHERE Candidate.id = Availability.candidateid AND Availability.votingid = $1", votingid)
 	fmt.Println("constructVoterViewableVoting")
 	candidatesStruct := []VoterViewableCandidate{}
 	votesUsed := 0
@@ -41,7 +41,7 @@ func constructVoterViewableVoting(votingid string, token string, db sql.DB) Vote
 		candidates.Scan(&candidateid, &candidatename, &candidatedescription)
 		var votes int
 		voted := false
-		db.QueryRow("SELECT COUNT(*) FROM Vote WHERE votingid = ? AND candidateid = ? AND token = ?", votingid, candidateid, token).Scan(&votes)
+		db.QueryRow("SELECT COUNT(*) FROM Vote WHERE votingid = $1 AND candidateid = $2 AND token = $3", votingid, candidateid, token).Scan(&votes)
 		if votes != 0 {
 			voted = true
 			votesUsed += 1
@@ -54,17 +54,17 @@ func constructVoterViewableVoting(votingid string, token string, db sql.DB) Vote
 	var open int
 	var ended int
 	var votespertoken int
-	db.QueryRow("SELECT name, id, description, open, ended, votespertoken FROM Voting WHERE id = ?", votingid).Scan(&name, &id, &description, &open, &ended, &votespertoken)
+	db.QueryRow("SELECT name, id, description, open, ended, votespertoken FROM Voting WHERE id = $1", votingid).Scan(&name, &id, &description, &open, &ended, &votespertoken)
 	votesleft := votespertoken - votesUsed
 	return VoterViewableVoting{Name: name, Id: id, Description: description, Open: open, Ended: ended, VotesLeft: votesleft, VotesPerToken: votespertoken, Candidates: candidatesStruct}
 }
 func HandleVoterApiQuery(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("at voter api")
 	params := r.URL.Query()
-	db, _ := sql.Open("sqlite3", DB_NAME)
+	db, _ := sql.Open("postgres", CONNECTION_STRING)
 	token := r.Header.Get("Authorization")
 	isVoter := 0
-	db.QueryRow("SELECT COUNT(*) description FROM Token WHERE value = ? AND valid = 1", token).Scan(&isVoter)
+	db.QueryRow("SELECT COUNT(*) description FROM Token WHERE value = $1 AND valid = 1", token).Scan(&isVoter)
 	if isVoter != 1 {
 		fmt.Fprintf(w, "denied")
 		return
@@ -104,10 +104,10 @@ func HandleVoterApiQuery(w http.ResponseWriter, r *http.Request) {
 			}
 			var currentVotes int
 			var allowedVotes int
-			db.QueryRow("SELECT COUNT(*) FROM Vote WHERE token = ? AND votingId = ?", t.Token, t.VotingId).Scan(&currentVotes)
-			db.QueryRow("SELECT votesPerToken FROM Voting WHERE id = ?", t.VotingId).Scan(&allowedVotes)
+			db.QueryRow("SELECT COUNT(*) FROM Vote WHERE token = $1 AND votingId = $2", t.Token, t.VotingId).Scan(&currentVotes)
+			db.QueryRow("SELECT votesPerToken FROM Voting WHERE id = $1", t.VotingId).Scan(&allowedVotes)
 			if currentVotes < allowedVotes {
-				_, err := db.Exec("INSERT INTO Vote(id, votingId, candidateId, token) VALUES(?, ?, ?, ?)", t.Id, t.VotingId, t.CandidateId, t.Token)
+				_, err := db.Exec("INSERT INTO Vote(id, votingId, candidateId, token) VALUES($1, $2, $3, $4)", t.Id, t.VotingId, t.CandidateId, t.Token)
 				if err != nil {
 					fmt.Println(err)
 					fmt.Fprintf(w, "nonexisting candidate/voting/token")

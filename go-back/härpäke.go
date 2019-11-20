@@ -10,6 +10,7 @@ import (
 )
 
 const DB_NAME string = "vaalit.db"
+const CONNECTION_STRING string = "postgres://vaalit:vaalit@localhost:5444/vaalit"
 
 func main() {
 	switch os.Args[1] {

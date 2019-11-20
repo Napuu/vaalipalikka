@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -21,8 +21,8 @@ type Votes = []Vote
 
 func HandleVoteApiQuery(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
-	db, _ := sql.Open("sqlite3", DB_NAME)
-	db.Exec("PRAGMA foreign_keys = ON")
+	db, _ := sql.Open("postgres", CONNECTION_STRING)
+	//db.Exec("PRAGMA foreign_keys = ON")
 	action, actionExists := params["a"]
 	if actionExists {
 		switch strings.Join(action, "") {
@@ -40,10 +40,10 @@ func HandleVoteApiQuery(w http.ResponseWriter, r *http.Request) {
 			}
 			var currentVotes int
 			var allowedVotes int
-			db.QueryRow("SELECT COUNT(*) FROM Vote WHERE token = ? AND votingId = ?", t.Token, t.VotingId).Scan(&currentVotes)
-			db.QueryRow("SELECT votesPerToken FROM Voting WHERE id = ?", t.VotingId).Scan(&allowedVotes)
+			db.QueryRow("SELECT COUNT(*) FROM Vote WHERE token = $1 AND votingId = $2", t.Token, t.VotingId).Scan(&currentVotes)
+			db.QueryRow("SELECT votesPerToken FROM Voting WHERE id = $1", t.VotingId).Scan(&allowedVotes)
 			if currentVotes < allowedVotes {
-				_, err := db.Exec("INSERT INTO Vote(id, votingId, candidateId, token) VALUES(?, ?, ?, ?)", t.Id, t.VotingId, t.CandidateId, t.Token)
+				_, err := db.Exec("INSERT INTO Vote(id, votingId, candidateId, token) VALUES($1, $2, $3, $4)", t.Id, t.VotingId, t.CandidateId, t.Token)
 				if err != nil {
 					fmt.Fprintf(w, "nonexisting candidate/voting/token")
 					break
@@ -76,7 +76,7 @@ func HandleVoteApiQuery(w http.ResponseWriter, r *http.Request) {
 		case "del":
 			target, targetExists := params["t"]
 			if targetExists {
-				_, err := db.Exec("DELETE FROM Vote WHERE id = ?", strings.Join(target, ""))
+				_, err := db.Exec("DELETE FROM Vote WHERE id = $1", strings.Join(target, ""))
 				if err == nil {
 					fmt.Fprint(w, "deleted")
 				} else {

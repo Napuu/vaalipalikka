@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 	"log"
 	"math/rand"
 	"net/http"
@@ -15,8 +15,7 @@ import (
 
 func HandleTokenApiQuery(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
-	db, _ := sql.Open("sqlite3", DB_NAME)
-	db.Exec("PRAGMA foreign_keys = ON")
+	db, _ := sql.Open("postgres", CONNECTION_STRING)
 	action, _ := params["a"]
 	switch strings.Join(action, "") {
 	case "generate":
@@ -31,7 +30,7 @@ func HandleTokenApiQuery(w http.ResponseWriter, r *http.Request) {
 		InsertNewTokens(newTokens, db)
 		fmt.Fprintf(w, "tokens generated")
 	case "show":
-		tokens, ok := db.Query("SELECT value, valid FROM Token")
+		tokens, ok := db.Query("SELECT value, valid FROM Token ORDER BY hidden_id")
 		var value string
 		var valid int
 		var tokensStruct = Tokens{}
@@ -56,7 +55,7 @@ func HandleTokenApiQuery(w http.ResponseWriter, r *http.Request) {
 		_v, _ := params["v"]
 		v, err := strconv.Atoi(strings.Join(_v, ""))
 		t := strings.Join(_t, "")
-		_, err = db.Exec("UPDATE Token SET valid = ? WHERE value = ?", v, t)
+		_, err = db.Exec("UPDATE Token SET valid = $1 WHERE value = $2", v, t)
 		if err != nil {
 			fmt.Println(err)
 			fmt.Fprintf(w, "something went wrong while updating token status")
@@ -103,7 +102,7 @@ func InsertNewTokens(tokens map[string]struct{}, db *sql.DB) {
 	}
 	tx, _ := db.Begin()
 	for token, _ := range tokens {
-		tx.Exec("INSERT INTO Token(value, valid) VALUES(?, 0)", token)
+		tx.Exec("INSERT INTO Token(value, valid) VALUES($1, 0)", token)
 	}
 	tx.Commit()
 }
