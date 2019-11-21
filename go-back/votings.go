@@ -39,7 +39,6 @@ func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprint(w, "malformed json")
 				break
 			}
-			fmt.Println("trying")
 			_, err = db.Exec("INSERT INTO Voting(name, id, description, open, ended, votespertoken) VALUES($1, $2, $3, $4, $5, $6)", t.Name, t.Id, t.Description, t.Open, t.Ended, t.VotesPerToken)
 			if err != nil {
 				_, err2 := db.Exec("UPDATE Voting SET name = $1, description = $2, open = $3, ended = $4, votespertoken = $5 WHERE id = $6", t.Name, t.Description, t.Open, t.Ended, t.VotesPerToken, t.Id)

@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type VoterViewableVoting struct {
@@ -30,12 +29,8 @@ type VoterViewableCandidate struct {
 }
 
 func constructVoterViewableVoting(votingid string, token string) VoterViewableVoting {
-	db.SetConnMaxLifetime(time.Second)
 	candidates, err := db.Query("SELECT id, name, description FROM Candidate, Availability WHERE Candidate.id = Availability.candidateid AND Availability.votingid = $1", votingid)
 	defer candidates.Close()
-	fmt.Println("hanging err next", votingid)
-	fmt.Println(err)
-	fmt.Println("constructVoterViewableVoting")
 	candidatesStruct := []VoterViewableCandidate{}
 	votesUsed := 0
 	for candidates.Next() {
