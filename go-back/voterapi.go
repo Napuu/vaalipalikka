@@ -1,8 +1,6 @@
 package main
 
 import (
-	"database/sql"
-	"time"
 	"encoding/json"
 	"fmt"
 	_ "github.com/lib/pq"
@@ -10,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type VoterViewableVoting struct {
@@ -30,10 +29,12 @@ type VoterViewableCandidate struct {
 	Voted       bool
 }
 
-func constructVoterViewableVoting(votingid string, token string, db sql.DB) VoterViewableVoting {
+func constructVoterViewableVoting(votingid string, token string) VoterViewableVoting {
 	db.SetConnMaxLifetime(time.Second)
-	candidates, _ := db.Query("SELECT id, name, description FROM Candidate, Availability WHERE Candidate.id = Availability.candidateid AND Availability.votingid = $1", votingid)
+	candidates, err := db.Query("SELECT id, name, description FROM Candidate, Availability WHERE Candidate.id = Availability.candidateid AND Availability.votingid = $1", votingid)
 	defer candidates.Close()
+	fmt.Println("hanging err next", votingid)
+	fmt.Println(err)
 	fmt.Println("constructVoterViewableVoting")
 	candidatesStruct := []VoterViewableCandidate{}
 	votesUsed := 0
@@ -82,7 +83,7 @@ func HandleVoterApiQuery(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				for votings.Next() {
 					votings.Scan(&id)
-					votingsStruct = append(votingsStruct, constructVoterViewableVoting(id, token, *db))
+					votingsStruct = append(votingsStruct, constructVoterViewableVoting(id, token))
 				}
 			} else {
 				log.Fatal(err)
