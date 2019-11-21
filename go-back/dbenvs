@@ -1,5 +1,0 @@
-export PGHOST=localhost
-export PGDATABASE=vaalit
-export PGUSER=vaalit
-export PGPASSWORD=vaalit
-export PGPORT=5444
