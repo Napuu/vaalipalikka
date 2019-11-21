@@ -17,8 +17,8 @@ func HandleLoginApiQuery(w http.ResponseWriter, r *http.Request) {
 		isVoter := 0
 		isAdmin := 0
 		//db, _ := sql.Open("postgres", CONNECTION_STRING)
-		db.QueryRow("SELECT COUNT(*) description FROM Token WHERE value = $1 AND valid = 1", token).Scan(&isVoter)
-		db.QueryRow("SELECT COUNT(*) description FROM Mastertoken WHERE value = $1", token).Scan(&isAdmin)
+		db.QueryRow("SELECT COUNT(*) FROM Token WHERE value = $1 AND valid = 1", token).Scan(&isVoter)
+		db.QueryRow("SELECT COUNT(*) FROM Mastertoken WHERE value = $1", token).Scan(&isAdmin)
 		if isVoter == 1 {
 			fmt.Fprintf(w, "voter")
 		} else if isAdmin == 1 {

@@ -58,7 +58,8 @@ func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 				var ended int
 				var votespertoken int
 				var votingsStruct = Votings{}
-				votings, err := db.Query("SELECT name, id, description, open, ended, votespertoken FROM Voting")
+				votings, err := db.Query("SELECT name, id, description, open, ended, votespertoken FROM Voting ORDER BY hidden_id")
+				defer votings.Close()
 				if err == nil {
 					for votings.Next() {
 						votings.Scan(&name, &id, &description, &open, &ended, &votespertoken)

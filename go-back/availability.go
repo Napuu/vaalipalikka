@@ -41,7 +41,8 @@ func HandleAvailabilityApiQuery(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprint(w, "ok i guess")
 	case "show":
-		availabilities, ok := db.Query("SELECT candidateid, votingid FROM Availability")
+		availabilities, ok := db.Query("SELECT candidateid, votingid FROM Availability ORDER BY hidden_id")
+		defer availabilities.Close()
 		var candidateid string
 		var votingid string
 		var availabilitiesStruct = Availabilities{}

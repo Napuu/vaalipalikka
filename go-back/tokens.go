@@ -30,6 +30,7 @@ func HandleTokenApiQuery(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "tokens generated")
 	case "show":
 		tokens, ok := db.Query("SELECT value, valid FROM Token ORDER BY hidden_id")
+		defer tokens.Close()
 		var value string
 		var valid int
 		var tokensStruct = Tokens{}
@@ -65,7 +66,7 @@ func HandleTokenApiQuery(w http.ResponseWriter, r *http.Request) {
 }
 
 func GenerateTokens(amount int) map[string]struct{} {
-	const TOKENLENGTH = 6
+	const TOKENLENGTH = 8
 	var tokens = make(map[string]struct{})
 	var exists = struct{}{}
 	upper := 1

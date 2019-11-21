@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"time"
 	"encoding/json"
 	"fmt"
 	_ "github.com/lib/pq"
@@ -30,7 +31,9 @@ type VoterViewableCandidate struct {
 }
 
 func constructVoterViewableVoting(votingid string, token string, db sql.DB) VoterViewableVoting {
+	db.SetConnMaxLifetime(time.Second)
 	candidates, _ := db.Query("SELECT id, name, description FROM Candidate, Availability WHERE Candidate.id = Availability.candidateid AND Availability.votingid = $1", votingid)
+	defer candidates.Close()
 	fmt.Println("constructVoterViewableVoting")
 	candidatesStruct := []VoterViewableCandidate{}
 	votesUsed := 0
@@ -44,7 +47,7 @@ func constructVoterViewableVoting(votingid string, token string, db sql.DB) Vote
 		db.QueryRow("SELECT COUNT(*) FROM Vote WHERE votingid = $1 AND candidateid = $2 AND token = $3", votingid, candidateid, token).Scan(&votes)
 		if votes != 0 {
 			voted = true
-			votesUsed += 1
+			votesUsed++
 		}
 		candidatesStruct = append(candidatesStruct, VoterViewableCandidate{Name: candidatename, Id: candidateid, Description: candidatedescription, Voted: voted})
 	}
@@ -74,7 +77,8 @@ func HandleVoterApiQuery(w http.ResponseWriter, r *http.Request) {
 		case "show":
 			var id string
 			var votingsStruct []VoterViewableVoting
-			votings, err := db.Query("SELECT id FROM Voting")
+			votings, err := db.Query("SELECT id FROM Voting ORDER BY hidden_id")
+			defer votings.Close()
 			if err == nil {
 				for votings.Next() {
 					votings.Scan(&id)

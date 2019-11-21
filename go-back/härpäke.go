@@ -9,10 +9,10 @@ import (
 	"database/sql"
 	"os"
 	"strings"
+	"time"
 )
 
-const DB_NAME string = "vaalit.db"
-const CONNECTION_STRING string = "postgres://vaalit:vaalit@localhost:5444/vaalit"
+const CONNECTION_STRING string = "postgres://vaalit:vaalit@localhost:4531/vaalit?sslmode=disable"
 
 var db *sql.DB
 
@@ -29,6 +29,9 @@ func main() {
 	fmt.Println("opening database")
 	var err error
 	db, err = sql.Open("postgres", CONNECTION_STRING)
+	db.SetMaxOpenConns(500)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(time.Second)
 	if err != nil {
 		log.Fatal("error connecting to postgres")
 	}

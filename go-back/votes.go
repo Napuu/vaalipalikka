@@ -55,7 +55,8 @@ func HandleVoteApiQuery(w http.ResponseWriter, r *http.Request) {
 			var candidateid string
 			var token string
 			var votesStruct = Votes{}
-			votes, err := db.Query("SELECT id, votingid, candidateid, token FROM Vote")
+			votes, err := db.Query("SELECT id, votingid, candidateid, token FROM Vote ORDER BY hidden_id")
+			defer votes.Close()
 			if err == nil {
 				for votes.Next() {
 					votes.Scan(&id, &votingid, &candidateid, &token)

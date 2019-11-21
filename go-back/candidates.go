@@ -67,7 +67,8 @@ func HandleCandidateApiQuery(w http.ResponseWriter, r *http.Request) {
 				var id string
 				var description string
 				var candidatesStruct = Candidates{}
-				candidates, err := db.Query("SELECT name, id, description FROM Candidate")
+				candidates, err := db.Query("SELECT name, id, description FROM Candidate ORDER BY hidden_id")
+				defer candidates.Close()
 				if err == nil {
 					for candidates.Next() {
 						candidates.Scan(&name, &id, &description)
@@ -101,7 +102,7 @@ func HandleCandidateApiQuery(w http.ResponseWriter, r *http.Request) {
 		case "del":
 			target, targetExists := params["t"]
 			if targetExists {
-				_, err := db.Exec("DELETE FROM Candidate WHERE id = $2", strings.Join(target, ""))
+				_, err := db.Exec("DELETE FROM Candidate WHERE id = $1", strings.Join(target, ""))
 				if err == nil {
 					fmt.Fprint(w, "deleted")
 				} else {
