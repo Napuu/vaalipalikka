@@ -22,7 +22,7 @@
     <div disabled variant="outline-primary" class="status disabled rounded-0 btn btn-outline-primary">
       {{(() => {
         if (this.voting["Open"] && !this.voting["Ended"] && this.voting["VotesLeft"] > 0) {
-          return "Äänestys on auki!" 
+          return "Äänestys on  auki!"
         } else if (this.voting["Ended"]) {
           return "Äänestys on päättynyt."
         } else if (!this.voting["Open"] && !this.voting["Ended"]) {
@@ -45,12 +45,9 @@ export default class OneVoting extends Vue {
   private initialClick(id: string) {
     if (this.voting["Open"] && !this.voting["Ended"] && this.voting["VotesLeft"] > 0) this.$store.commit("setProbableVotingTarget", {votingid: this.voting["Id"], candidateid: id})
   }
-  private vittu(ev: Event) {
-    console.log("löksadfölkjasfdöljksadfjkl")
-  }
   private voteClick(candidateId: string) {
     console.log("voting right now")
-    fetch("/api?action=voter&a=vote", {
+    fetch("/vaalit_api?action=voter&a=vote", {
       method: "POST",
       body: JSON.stringify({
         VotingId: this.voting.Id,
@@ -58,12 +55,12 @@ export default class OneVoting extends Vue {
         CandidateId: candidateId,
         Token: this.$store.state.token
       }),
-      headers: {"Authorization": this.$store.state.token} 
+      headers: {"Authorization": this.$store.state.token}
     }).then(async res => {
       console.log(res)
-      let votings = await fetch("/api?action=voter&a=show", {headers: {"Authorization": this.$store.state.token}})
+      let votings = await fetch("/vaalit_api?action=voter&a=show", {headers: {"Authorization": this.$store.state.token}})
       let votingsJson = await votings.json()
-      this.$store.commit("setVotings", {votings: votingsJson})
+      this.$store.commit("setNonAdminVotings", {votings: votingsJson})
       this.$store.commit("clearProbableVotingTarget")
     })
     //const textAns = await ans.text()
@@ -89,7 +86,7 @@ export default class OneVoting extends Vue {
 #title {
   background: grey;
   color: white;
-  /* shifting a bit right ":D" 
+  /* shifting a bit right ":D"
   margin-left: 3px;
   margin-right: -3px;
   */

@@ -14,7 +14,7 @@
     <div class="col2">
       <!-- <b-button variant="warning" v-on:click="modify">M</b-button> -->
       <!-- <b-button variant="info" v-on:click="update">T</b-button> -->
-      <b-button variant="danger" v-on:click="_delete">Poista</b-button>
+      <!-- <b-button variant="danger" v-on:click="_delete">Poista</b-button> -->
     </div>
   </div>
 </template>

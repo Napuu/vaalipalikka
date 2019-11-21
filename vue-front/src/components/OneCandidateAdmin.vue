@@ -64,7 +64,7 @@ export default {
         id: (this.id === "" ? (new Date().getTime()).toString() : this.id),
         description: ""
       }})
-      this.$store.dispatch("fetchCandidates", {headers: {"Authorization": "123"}})
+      this.$store.dispatch("fetchCandidates")
     }
   }
 }

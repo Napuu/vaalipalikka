@@ -10,7 +10,7 @@
     <div v-if="tab == 'voting'" class="voting">
       <button @click="addVoting">lisää äänestys</button>
       <div v-bind:key="voting.Id" v-for="voting in this.$store.state.admin.votings">
-        <OneVotingAdmin :voting="voting"/>
+        <OneVotingAdmin v-if="voting.Id !== ''" :voting="voting"/>
       </div>
 <!-- TODO make admin buttons (modify, save, delete) disabled or something when they should be -->
     </div>
@@ -34,7 +34,6 @@
       </div>
     </div>
     <div v-else>
-      asdfasdfsd
       {{tab}}
     </div>
   </div>
@@ -54,31 +53,31 @@ export default {
   methods: {
     move(_tab: string) {
       console.log("should fetch " + _tab)
-      let options = {headers: {"Authorization": "123"}}
       switch (_tab) {
         case "candidate":
-          store.dispatch("fetchCandidates", {options})
+          store.dispatch("fetchCandidates")
           break
         case "voting":
-          store.dispatch("fetchVotings", {options})
+          store.dispatch("fetchVotings")
           break
         case "availability":
-          store.dispatch("fetchAvailabilities", {options})
+          store.dispatch("fetchAvailabilities")
           break
+        case "token":
+          store.dispatch("fetchTokens")
       }
       this.tab = _tab
     },
+
     addVoting() {
       let newTarget: PureVoting = {Name: "", Id: (new Date().getTime()).toString(), Description: "", Open: 0, Ended: 0, VotesPerToken: 0}
       store.commit("addVoting", {voting: newTarget})
+      store.commit("setEditableVoting", {voting: newTarget})
     },
     addCandidate() {
       let newTarget: PureCandidate = {Name: "", Id: (new Date().getTime()).toString(), Description: ""}
       store.commit("addCandidate", {candidate: newTarget})
-    },
-    addAvailability() {
-      let newTarget: PureAvailability = { VotingId: "", CandidateId: ""}
-      store.commit("addAvailability", {availability: newTarget})
+      store.commit("setEditableCandidate", {candidate: newTarget})
     },
     generateTokens() {
       this.$bvModal.msgBoxConfirm(`Generoi uudet avaimet?`, {
@@ -99,13 +98,13 @@ export default {
     },
     getVotingName(votingId: string): string {
     let name = this.$store.state.admin.votings.filter((c: PureVoting) => c.Id === votingId)
-    return (name.length > 0 ? name[0].Name : "voti id " + votingId + " not found")
+    return (name.length > 0 ? name[0].Name : "voting id " + votingId + " not found")
   }
   },
   name: 'voting',
   data(): any {
     return {
-      tab: "datatab",
+      tab: "",
       store: store,
     }
   },

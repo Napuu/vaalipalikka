@@ -117,10 +117,10 @@ export default new Vuex.Store({
     },
     updateAvailability(state, payload: {newAvailability: PureAvailability}) {
       state.admin.availabilities = state.admin.availabilities.map((_availability) => {
-        if (_availability.CandidateId == payload.newAvailability.CandidateId && 
+        if (_availability.CandidateId == payload.newAvailability.CandidateId &&
           _availability.VotingId == payload.newAvailability.VotingId) {
           return payload.newAvailability
-        } 
+        }
         else return _availability
       })
     },
@@ -158,7 +158,7 @@ export default new Vuex.Store({
   },
   actions: {
     async login({commit, dispatch}, {token}) {
-      fetch("/api?action=login", {headers: {"Authorization": token}}).then(async res => {
+      fetch("/vaalit_api?action=login", {headers: {"Authorization": token}}).then(async res => {
         let text = await res.text()
         if (text !== "denied") {
           if (text === "admin") {
@@ -166,7 +166,7 @@ export default new Vuex.Store({
             router.push("admin")
             dispatch("fetchAdminViewableData")
           } else {
-            let votings = await fetch("/api?action=voter&a=show", {headers: {"Authorization": token}})
+            let votings = await fetch("/vaalit_api?action=voter&a=show", {headers: {"Authorization": token}})
             let votingsJson = await votings.json()
             commit("login", {role: "voter", token: token})
             commit("setNonAdminVotings", {votings: votingsJson})
@@ -177,35 +177,34 @@ export default new Vuex.Store({
       })
     },
     async fetchAdminViewableData({dispatch, state}){
-      let options = {headers: {"Authorization": state.token}}
-      dispatch("fetchVotes", {options})
-      dispatch("fetchCandidates", {options})
-      dispatch("fetchTokens", {options})
-      dispatch("fetchVotings", {options})
-      dispatch("fetchAvailabilities", {options})
+      dispatch("fetchVotes")
+      dispatch("fetchCandidates")
+      dispatch("fetchTokens")
+      dispatch("fetchVotings")
+      dispatch("fetchAvailabilities")
     },
-    async fetchVotes({commit}, {options}) {
-      let _votes = await fetch("/api?action=vote&a=show", options)
+    async fetchVotes({state, commit}) {
+      let _votes = await fetch("/vaalit_api?action=vote&a=show", {headers: { "Authorization": state.token }})
       let votes = await _votes.json()
       commit("setVotes", {votes})
     },
-    async fetchCandidates({commit}, {options}) {
-      let _candidates= await fetch("/api?action=candidate&a=show", options)
+    async fetchCandidates({state, commit}) {
+      let _candidates= await fetch("/vaalit_api?action=candidate&a=show", {headers: { "Authorization": state.token }})
       let candidates = await _candidates.json()
       commit("setCandidates", {candidates})
     },
-    async fetchTokens({commit}, {options}) {
-      let _tokens = await fetch("/api?action=token&a=show", options)
+    async fetchTokens({commit, state}) {
+      let _tokens = await fetch("/vaalit_api?action=token&a=show", {headers: { "Authorization": state.token }})
       let tokens = await _tokens.json()
       commit("setTokens", {tokens})
     },
-    async fetchVotings({commit}, {options}) {
-      let _votings = await fetch("/api?action=voting&a=show", options)
+    async fetchVotings({state, commit}) {
+      let _votings = await fetch("/vaalit_api?action=voting&a=show", {headers: { "Authorization": state.token }})
       let votings = await _votings.json()
       commit("setVotings", {votings})
     },
-    async fetchAvailabilities({commit}, {options}) {
-      let _availability = await fetch("/api?action=availability&a=show", options)
+    async fetchAvailabilities({state, commit}) {
+      let _availability = await fetch("/vaalit_api?action=availability&a=show", {headers: { "Authorization": state.token }})
       let availabilities = await _availability.json()
       commit("setAvailabilities", {availabilities})
     },
@@ -218,7 +217,7 @@ export default new Vuex.Store({
         Description: "",
         VotesPerToken: parseInt(voting.votespertoken)
       }
-      let answer = await fetch("/api?action=voting&a=add", {
+      let answer = await fetch("/vaalit_api?action=voting&a=add", {
         headers: {"Authorization": state.token},
         method: "POST",
         body: JSON.stringify(newVoting)
@@ -242,7 +241,7 @@ export default new Vuex.Store({
         Id: candidate.id,
         Description: "",
       }
-      let answer = await fetch("/api?action=candidate&a=add", {
+      let answer = await fetch("/vaalit_api?action=candidate&a=add", {
         headers: {"Authorization": state.token},
         method: "POST",
         body: JSON.stringify(newCandidate)
@@ -259,7 +258,7 @@ export default new Vuex.Store({
         CandidateId: availability.candidateid,
         VotingId: availability.votingid
       }
-      let answer = await fetch("/api?action=availability&a=add", {
+      let answer = await fetch("/vaalit_api?action=availability&a=add", {
         headers: {"Authorization": state.token},
         method: "POST",
         body: JSON.stringify(newAvailability)
@@ -273,27 +272,27 @@ export default new Vuex.Store({
     },
 
     async deleteVoting({commit, state}, {votingid}) {
-      await fetch(`/api?action=voting&a=del&t=${votingid}`, {
+      await fetch(`/vaalit_api?action=voting&a=del&t=${votingid}`, {
         headers: {"Authorization": state.token},
       });
       commit("deleteVoting", {deletableVotingId: votingid})
     },
     async deleteCandidate({commit, state}, {candidateid}) {
-      await fetch(`/api?action=candidate&a=del&t=${candidateid}`, {
+      await fetch(`/vaalit_api?action=candidate&a=del&t=${candidateid}`, {
         headers: {"Authorization": state.token},
       });
       commit("deleteCandidate", {deletableCandidateId: candidateid})
     },
     // unused but working
     // async deleteToken(state, {tokenvalue}) {
-    //   await fetch(`/api?action=token&a=del&t=${tokenvalue}`, {
+    //   await fetch(`/vaalit_api?action=token&a=del&t=${tokenvalue}`, {
     //     headers: {"Authorization": this.state.token},
     //   });
     //   commit("deleteToken", {deletableTokenValue: tokenvalue})
     // },
     async clearAndAddAvailabilities({state}, {votingid, candidates}) {
       let pairs = candidates.map((a: PureCandidate) => { return {CandidateId: a.Id, VotingId: votingid}})
-      await fetch(`/api?action=availability&a=clearadd`, {
+      await fetch(`/vaalit_api?action=availability&a=clearadd`, {
         headers: {"Authorization": state.token},
         body: JSON.stringify(pairs),
         method: "POST"
@@ -301,27 +300,32 @@ export default new Vuex.Store({
 
     },
     async toggleToken({commit, state}, {tokenvalue}) {
-      console.log("tokenvalue", tokenvalue)
       let targetToken: any = state.admin.tokens.filter(a => a.Value === tokenvalue)
-      console.log("token" + targetToken)
-      console.log("???")
       targetToken = targetToken[0]
+      let failed = false
       if (targetToken.Valid === 0) {
-        await fetch(`/api?action=token&a=toggle&t=${tokenvalue}&v=1`, {
+        const ans = await fetch(`/vaalit_api?action=token&a=toggle&t=${tokenvalue}&v=1`, {
           headers: {"Authorization": state.token}
         })
+        const t = await ans.text()
+        console.log(t)
+        if (t.indexOf("ok i guess") !== -1) failed = true
       } else {
-        await fetch(`/api?action=token&a=toggle&t=${tokenvalue}&v=0`, {
+        const ans = await fetch(`/vaalit_api?action=token&a=toggle&t=${tokenvalue}&v=0`, {
           headers: {"Authorization": state.token}
         })
+        const t = await ans.text()
+        console.log(t)
+        if (t.indexOf("ok i guess") !== -1) failed = true
       }
-      commit("toggleToken", {togglableTokenValue: tokenvalue}) 
+      failed = false
+      if (!failed) commit("toggleToken", {togglableTokenValue: tokenvalue})
     },
 
     async generateTokens({state, commit}) {
       if (state.role === "admin") {
-        await fetch("api?action=token&a=generate")
-        let _tokens = await fetch("/api?action=token&a=show", {
+        await fetch("/vaalit_api?action=token&a=generate")
+        let _tokens = await fetch("/vaalit_api?action=token&a=show", {
           headers: {"Authorization": state.token}
         })
         let tokens = await _tokens.json()

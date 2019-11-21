@@ -67,12 +67,6 @@ export default class App extends Vue {
   }
   private async mounted() {
     console.log("here we go")
-    // let votings = await fetch("/api?action=voter&a=show", {headers: {"Authorization": "123"}})
-    // let votingsJson = await votings.json()
-    // if (votingsJson.indexOf("denied") !== -1) this.logout()
-    // this.$store.commit("setVotings", {votings: votingsJson})
-    // this.$store.commit("login", {role: "admin", token: "123"})
-    // this.$router.push("voting")
     if (window.localStorage.getItem("token") !== null) {
       this.$store.dispatch("login", {token: window.localStorage.getItem("token")})
     }

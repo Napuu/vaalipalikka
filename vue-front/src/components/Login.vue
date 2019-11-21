@@ -19,8 +19,9 @@ export default class Login extends Vue {
     }
   }
   login() {
+    console.log("token should be here " + this.token)
     if (this.token !== "") {
-      fetch("/api?action=login", {headers: {"Authorization": this.token}}).then(async res => {
+      fetch("/vaalit_api?action=login", {headers: {"Authorization": this.token}}).then(async res => {
         let text = await res.text()
         if (text !== "denied") {
           if (text === "admin") {
@@ -28,9 +29,9 @@ export default class Login extends Vue {
             this.$router.push("admin")
             await this.$store.dispatch("fetchAdminViewableData")
           } else {
-            let votings = await fetch("/api?action=voter&a=show", {headers: {"Authorization": this.token}})
+            let votings = await fetch("/vaalit_api?action=voter&a=show", {headers: {"Authorization": this.token}})
             let votingsJson = await votings.json()
-            this.$store.commit("setVotings", {votings: votingsJson})
+            this.$store.commit("setNonAdminVotings", {votings: votingsJson})
             this.$store.commit("login", {role: "voter", token: this.token})
             this.$router.push("voting")
           }
