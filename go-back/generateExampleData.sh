@@ -1,5 +1,6 @@
 # clear old data
-curl "http://localhost:8281/drop"
+# :)
+# curl "http://localhost:8281/drop"
 
 # insert admin-token
 sqlite3 vaalit.db "INSERT INTO Mastertoken(value) Values(\"123\");"
