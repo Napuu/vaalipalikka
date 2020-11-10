@@ -1,0 +1,29 @@
+version: '2'
+
+services:
+    reverseproxy:
+        build:
+            context: ./reverseproxy
+        ports:
+            - 3000:8080
+        restart: always
+
+    front:
+            #depends_on:
+            #- reverseproxy
+        restart: always
+        build:
+            context: ./vue-front
+    back:
+            #depends_on:
+            #- reverseproxy
+        restart: always
+        build:
+            context: ./go-back
+
+    postgres:
+        restart: always
+        environment:
+            - POSTGRES_PASSWORD=vaalit
+        build:
+            context: ./postgres

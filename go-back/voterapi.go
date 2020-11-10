@@ -29,7 +29,7 @@ type VoterViewableCandidate struct {
 }
 
 func constructVoterViewableVoting(votingid string, token string) VoterViewableVoting {
-	candidates, err := db.Query("SELECT id, name, description FROM Candidate, Availability WHERE Candidate.id = Availability.candidateid AND Availability.votingid = $1", votingid)
+	candidates, _ := db.Query("SELECT id, name, description FROM Candidate, Availability WHERE Candidate.id = Availability.candidateid AND Availability.votingid = $1", votingid)
 	defer candidates.Close()
 	candidatesStruct := []VoterViewableCandidate{}
 	votesUsed := 0

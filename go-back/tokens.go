@@ -49,16 +49,18 @@ func HandleTokenApiQuery(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write(tokensJson)
 	case "toggle":
-		_t, err := params["t"]
-		_v, err := params["v"]
-		v, err := strconv.Atoi(strings.Join(_v, ""))
+		_t, _ := params["t"]
+		_v, _ := params["v"]
+		v, _ := strconv.Atoi(strings.Join(_v, ""))
 		t := strings.Join(_t, "")
-		_, err = db.Exec("UPDATE Token SET valid = $1 WHERE value = $2", v, t)
+		_, _ = db.Exec("UPDATE Token SET valid = $1 WHERE value = $2", v, t)
+		/*
 		if err != nil {
 			fmt.Println(err)
 			fmt.Fprintf(w, "something went wrong while updating token status")
 			break
 		}
+		*/
 		fmt.Fprintf(w, "ok i guess")
 	}
 }

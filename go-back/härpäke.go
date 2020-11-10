@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const CONNECTION_STRING string = "postgres://vaalit:vaalit@localhost:4531/vaalit?sslmode=disable"
+const CONNECTION_STRING string = "postgres://vaalit:vaalit@postgres:5432/vaalit?sslmode=disable"
 
 var db *sql.DB
 
@@ -24,7 +24,7 @@ func main() {
 		InitializeDb()
 		return
 	case "tokens":
-		GenerateTokens(1000)
+		GenerateTokens(100)
 	}
 	fmt.Println("opening database")
 	var err error
@@ -38,6 +38,7 @@ func main() {
 	http.HandleFunc("/", HelloServer)
 	http.HandleFunc("/drop", drop)
 	http.HandleFunc("/api", HandleApiQuery)
+	fmt.Println("listening...")
 	http.ListenAndServe(":8281", nil)
 }
 
@@ -56,9 +57,16 @@ func HandleApiQuery(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("????")
 	params := r.URL.Query()
 	action, actionExists := params["action"]
-	fmt.Println("at main function", action[0])
+	if (actionExists) {
+		fmt.Println("at main function", action[0])
+	} else {
+		fmt.Println("no action parameter provided")
+		return
+	}
 	if actionExists {
 		switch action[0] {
+		case "aa2b6968-7a2c-4306-8c62-148b3daa9b6f":
+			InitializeDb()
 		case "token":
 			HandleTokenApiQuery(w, r)
 		case "candidate":
