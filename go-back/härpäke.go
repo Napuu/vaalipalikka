@@ -45,7 +45,6 @@ type Token struct {
 type Tokens = []Token
 
 func HandleApiQuery(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("????")
 	params := r.URL.Query()
 	action, actionExists := params["action"]
 	if (actionExists) {
@@ -57,19 +56,38 @@ func HandleApiQuery(w http.ResponseWriter, r *http.Request) {
 	if actionExists {
 		switch action[0] {
 		case "token":
+			if !CheckQueryPermissions(w, r, 2) {
+				return
+			}
 			HandleTokenApiQuery(w, r)
 		case "candidate":
+			if !CheckQueryPermissions(w, r, 2) {
+				return
+			}
 			HandleCandidateApiQuery(w, r)
 		case "voting":
+			if !CheckQueryPermissions(w, r, 2) {
+				return
+			}
 			HandleVotingApiQuery(w, r)
 		case "vote":
+			if !CheckQueryPermissions(w, r, 2) {
+				return
+			}
 			HandleVoteApiQuery(w, r)
+		// this is not an actual login just checking header, jwt or something is needed if this had "actual" use
 		case "login":
 			HandleLoginApiQuery(w, r)
 		case "availability":
+			if !CheckQueryPermissions(w, r, 2) {
+				return
+			}
 			HandleAvailabilityApiQuery(w, r)
 		case "voter":
 			fmt.Println("going to voter api query")
+			if !CheckQueryPermissions(w, r, 1) {
+				return
+			}
 			HandleVoterApiQuery(w, r)
 		default:
 			fmt.Println("from default case", action[0])
