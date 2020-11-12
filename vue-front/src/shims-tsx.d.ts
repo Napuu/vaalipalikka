@@ -39,7 +39,7 @@ declare global {
     Description: string
     Open: number
     Ended: number
-    VotesPerToken: number
+    Visible: number
   }
   interface PureCandidate {
     Name: string

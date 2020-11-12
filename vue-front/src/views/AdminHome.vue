@@ -52,7 +52,6 @@ import store from '../store'
 export default {
   methods: {
     move(_tab: string) {
-      console.log("should fetch " + _tab)
       switch (_tab) {
         case "candidate":
           store.dispatch("fetchCandidates")
@@ -70,7 +69,7 @@ export default {
     },
 
     addVoting() {
-      let newTarget: PureVoting = {Name: "", Id: (new Date().getTime()).toString(), Description: "", Open: 0, Ended: 0, VotesPerToken: 0}
+      let newTarget: PureVoting = {Name: "", Id: (new Date().getTime()).toString(), Description: "", Open: 0, Ended: 0, Visible: 0}
       store.commit("addVoting", {voting: newTarget})
       store.commit("setEditableVoting", {voting: newTarget})
     },

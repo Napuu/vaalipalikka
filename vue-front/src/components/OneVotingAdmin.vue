@@ -18,9 +18,9 @@
         <b-form-select v-else v-model="ended" :options="endedOptions"/>
       </div>
       <div class="valueholder">
-        <div class="title">Sallitut äänet</div>
-        <div v-if="state.admin.editableVoting.Id !== voting.Id" class="value">{{voting.VotesPerToken}}</div>
-        <b-form-input v-else v-model="votespertoken" type="number"/>
+        <div class="title">Näkyvillä</div>
+        <div v-if="state.admin.editableVoting.Id !== voting.Id" class="value">{{voting.Visible}}</div>
+        <b-form-select v-else v-model="visible" :options="visibleOptions"/>
       </div>
       <div class="candidates valueholder">
         <div class="title">Ehdokkaat</div>
@@ -54,7 +54,7 @@ export default {
       this.id = this.voting.Id
       this.open = this.voting.Open
       this.ended = this.voting.Ended
-      this.votespertoken = this.voting.VotesPerToken
+      this.visible = this.voting.Visible
       this.$store.commit("setEditableVoting", {voting: this.voting})
     },
     async update() {
@@ -65,7 +65,7 @@ export default {
         id: this.id,
         open: this.open,
         ended: this.ended,
-        votespertoken: this.votespertoken
+        visible: this.visible,
       }})
       store.dispatch("fetchVotings")
       store.dispatch("clearAndAddAvailabilities", {votingid: this.id, candidates: this.candidatesSelected})
@@ -133,7 +133,7 @@ export default {
       id: "",
       open: 0,
       ended: 0,
-      votespertoken: 0,
+      visible: 0,
       state: store.state,
       openOptions: [
         { value: 1, text: "Kyllä" },
@@ -144,6 +144,10 @@ export default {
         ...store.state.admin.candidates.map((a: PureCandidate) => {return {Id: a.Id, Name: a.Name}})
       ],
       endedOptions: [
+        { value: 1, text: "Kyllä" },
+        { value: 0, text: "Ei" }
+      ],
+      visibleOptions: [
         { value: 1, text: "Kyllä" },
         { value: 0, text: "Ei" }
       ]

@@ -49,7 +49,7 @@ export default {
       id: "",
       open: 0,
       ended: 0,
-      votespertoken: 0,
+      visible: 0,
       state: store.state,
       openOptions: [
         { value: 1, text: "Kyllä" },

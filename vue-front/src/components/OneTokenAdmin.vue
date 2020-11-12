@@ -30,7 +30,6 @@ export default {
   // delete seems to be reserved keyword
   methods: {
     toggle(status: string) {
-      console.log("toggling status")
       this.$store.dispatch("toggleToken", {tokenvalue: this.token.Value})
     },
     modify() {

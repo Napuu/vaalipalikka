@@ -17,9 +17,6 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 export default class TokenThingy extends Vue {
   private toggle(e: Event) {
     this.$store.commit("toggleTokenVisibility")
-    /*eslint no-console: "error"*/
-    // eslint-disable-next-line no-console
-    console.log("asdf")
   }
 }
 </script>

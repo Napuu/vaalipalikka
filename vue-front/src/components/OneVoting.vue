@@ -46,7 +46,6 @@ export default class OneVoting extends Vue {
     if (this.voting["Open"] && !this.voting["Ended"] && this.voting["VotesLeft"] > 0) this.$store.commit("setProbableVotingTarget", {votingid: this.voting["Id"], candidateid: id})
   }
   private voteClick(candidateId: string) {
-    console.log("voting right now")
     fetch("/vaalit_api?action=voter&a=vote", {
       method: "POST",
       body: JSON.stringify({
@@ -57,7 +56,6 @@ export default class OneVoting extends Vue {
       }),
       headers: {"Authorization": this.$store.state.token}
     }).then(async res => {
-      console.log(res)
       let votings = await fetch("/vaalit_api?action=voter&a=show", {headers: {"Authorization": this.$store.state.token}})
       let votingsJson = await votings.json()
       this.$store.commit("setNonAdminVotings", {votings: votingsJson})

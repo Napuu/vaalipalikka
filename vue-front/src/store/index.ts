@@ -214,8 +214,8 @@ export default new Vuex.Store({
         Id: voting.id,
         Open: voting.open,
         Ended: voting.ended,
+        Visible: voting.visible,
         Description: "",
-        VotesPerToken: parseInt(voting.votespertoken)
       }
       let answer = await fetch("/vaalit_api?action=voting&a=add", {
         headers: {"Authorization": state.token},
@@ -308,14 +308,12 @@ export default new Vuex.Store({
           headers: {"Authorization": state.token}
         })
         const t = await ans.text()
-        console.log(t)
         if (t.indexOf("ok i guess") !== -1) failed = true
       } else {
         const ans = await fetch(`/vaalit_api?action=token&a=toggle&t=${tokenvalue}&v=0`, {
           headers: {"Authorization": state.token}
         })
         const t = await ans.text()
-        console.log(t)
         if (t.indexOf("ok i guess") !== -1) failed = true
       }
       failed = false
