@@ -1,7 +1,7 @@
 CREATE DATABASE vaalit;
 CREATE USER vaalit WITH PASSWORD 'vaalit';
 \c vaalit
-CREATE TABLE Voting(name TEXT, id TEXT PRIMARY KEY, description TEXT, open INTEGER, ended INTEGER, votesPerToken INTEGER, hidden_ID SERIAL);
+CREATE TABLE Voting(name TEXT, id TEXT PRIMARY KEY, description TEXT, open INTEGER, ended INTEGER, visible INTEGER, hidden_ID SERIAL);
 CREATE TABLE Token(value TEXT PRIMARY KEY, valid INTEGER, hidden_id SERIAL);
 CREATE TABLE Candidate(name TEXT, id TEXT PRIMARY KEY, description TEXT, hidden_id SERIAL);
 CREATE TABLE Availability(candidateId TEXT REFERENCES Candidate(id) ON DELETE CASCADE ON UPDATE CASCADE, votingId TEXT REFERENCES Voting(id) ON DELETE CASCADE ON UPDATE CASCADE, hidden_id SERIAL, PRIMARY KEY (candidateId, votingId));
