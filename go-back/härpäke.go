@@ -20,9 +20,6 @@ func main() {
 	switch os.Args[1] {
 	case "start":
 		fmt.Println("starting server...")
-	case "prepare":
-		InitializeDb()
-		return
 	case "tokens":
 		GenerateTokens(100)
 	}
@@ -36,15 +33,9 @@ func main() {
 		log.Fatal("error connecting to postgres")
 	}
 	http.HandleFunc("/", HelloServer)
-	http.HandleFunc("/drop", drop)
 	http.HandleFunc("/api", HandleApiQuery)
 	fmt.Println("listening...")
 	http.ListenAndServe(":8281", nil)
-}
-
-func drop(w http.ResponseWriter, r *http.Request) {
-	InitializeDb()
-	fmt.Fprintf(w, "done")
 }
 
 type Token struct {
@@ -65,8 +56,6 @@ func HandleApiQuery(w http.ResponseWriter, r *http.Request) {
 	}
 	if actionExists {
 		switch action[0] {
-		case "aa2b6968-7a2c-4306-8c62-148b3daa9b6f":
-			InitializeDb()
 		case "token":
 			HandleTokenApiQuery(w, r)
 		case "candidate":
