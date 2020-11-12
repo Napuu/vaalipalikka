@@ -21,7 +21,6 @@
       </div>
     </div>
     <div v-else-if="tab == 'token'" class="token">
-      <button @click="generateTokens">generoi uudet avaimet</button>
       <div v-bind:key="token.Value" v-for="token in this.$store.state.admin.tokens">
         <OneTokenAdmin :token="token"/>
       </div>
