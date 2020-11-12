@@ -17,7 +17,7 @@ type VoterViewableVoting struct {
 	Open          int
 	Ended         int
 	VotesLeft     int
-	VotesPerToken int
+	Visible int
 	Candidates    []VoterViewableCandidate
 }
 
@@ -52,10 +52,10 @@ func constructVoterViewableVoting(votingid string, token string) VoterViewableVo
 	var description string
 	var open int
 	var ended int
-	var votespertoken int
-	db.QueryRow("SELECT name, id, description, open, ended, votespertoken FROM Voting WHERE id = $1", votingid).Scan(&name, &id, &description, &open, &ended, &votespertoken)
-	votesleft := votespertoken - votesUsed
-	return VoterViewableVoting{Name: name, Id: id, Description: description, Open: open, Ended: ended, VotesLeft: votesleft, VotesPerToken: votespertoken, Candidates: candidatesStruct}
+	var visible int
+	db.QueryRow("SELECT name, id, description, open, ended, visible FROM Voting WHERE id = $1", votingid).Scan(&name, &id, &description, &open, &ended, &visible)
+	votesleft := visible - votesUsed
+	return VoterViewableVoting{Name: name, Id: id, Description: description, Open: open, Ended: ended, VotesLeft: votesleft, Visible: visible, Candidates: candidatesStruct}
 }
 func HandleVoterApiQuery(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("at voter api")

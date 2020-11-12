@@ -30,19 +30,19 @@ curl --header "Content-Type: application/json" \
 # votings
 curl --header "Content-Type: application/json" \
   --request POST \
-  --data '{"name":"Äänestys 1","id":"1", "description": "Äänestys nro. 1 id 1", "votespertoken": 1, "open": 1}' \
+  --data '{"name":"Äänestys 1","id":"1", "description": "Äänestys nro. 1 id 1", "visible": 1, "open": 1}' \
   "http://localhost:8281/api?action=voting&a=add"
 curl --header "Content-Type: application/json" \
   --request POST \
-  --data '{"name":"Äänestys 2","id":"2", "description": "Äänestys nro. 2 id 2", "votespertoken": 1, "open": 1}' \
+  --data '{"name":"Äänestys 2","id":"2", "description": "Äänestys nro. 2 id 2", "visible": 1, "open": 1}' \
   "http://localhost:8281/api?action=voting&a=add"
 curl --header "Content-Type: application/json" \
   --request POST \
-  --data '{"name":"Äänestys 3","id":"3", "description": "Äänestys nro. 3 id 3", "votespertoken": 1, "open": 0}' \
+  --data '{"name":"Äänestys 3","id":"3", "description": "Äänestys nro. 3 id 3", "visible": 1, "open": 0}' \
   "http://localhost:8281/api?action=voting&a=add"
 curl --header "Content-Type: application/json" \
   --request POST \
-  --data '{"name":"Äänestys 4","id":"4", "description": "Äänestys nro. 4 id 4", "votespertoken": 1, "open": 1, "ended": 1}' \
+  --data '{"name":"Äänestys 4","id":"4", "description": "Äänestys nro. 4 id 4", "visible": 1, "open": 1, "ended": 1}' \
   "http://localhost:8281/api?action=voting&a=add"
 
 # voting | candidates

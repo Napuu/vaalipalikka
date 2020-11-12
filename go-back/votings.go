@@ -17,7 +17,7 @@ type Voting struct {
 	Description   string
 	Open          int
 	Ended         int
-	VotesPerToken int
+	Visible       int
 }
 type Votings = []Voting
 
@@ -39,9 +39,9 @@ func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprint(w, "malformed json")
 				break
 			}
-			_, err = db.Exec("INSERT INTO Voting(name, id, description, open, ended, votespertoken) VALUES($1, $2, $3, $4, $5, $6)", t.Name, t.Id, t.Description, t.Open, t.Ended, t.VotesPerToken)
+			_, err = db.Exec("INSERT INTO Voting(name, id, description, open, ended, visible) VALUES($1, $2, $3, $4, $5, $6)", t.Name, t.Id, t.Description, t.Open, t.Ended, t.Visible)
 			if err != nil {
-				_, err2 := db.Exec("UPDATE Voting SET name = $1, description = $2, open = $3, ended = $4, votespertoken = $5 WHERE id = $6", t.Name, t.Description, t.Open, t.Ended, t.VotesPerToken, t.Id)
+				_, err2 := db.Exec("UPDATE Voting SET name = $1, description = $2, open = $3, ended = $4, visible = $5 WHERE id = $6", t.Name, t.Description, t.Open, t.Ended, t.Visible, t.Id)
 				fmt.Println(err2)
 				fmt.Fprint(w, "replaced")
 				break
@@ -55,14 +55,14 @@ func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 				var description string
 				var open int
 				var ended int
-				var votespertoken int
+				var visible int
 				var votingsStruct = Votings{}
-				votings, err := db.Query("SELECT name, id, description, open, ended, votespertoken FROM Voting ORDER BY hidden_id")
+				votings, err := db.Query("SELECT name, id, description, open, ended, visible FROM Voting ORDER BY hidden_id")
 				defer votings.Close()
 				if err == nil {
 					for votings.Next() {
-						votings.Scan(&name, &id, &description, &open, &ended, &votespertoken)
-						votingsStruct = append(votingsStruct, Voting{name, id, description, open, ended, votespertoken})
+						votings.Scan(&name, &id, &description, &open, &ended, &visible)
+						votingsStruct = append(votingsStruct, Voting{name, id, description, open, ended, visible})
 					}
 				} else {
 					log.Fatal(err)
@@ -81,14 +81,14 @@ func HandleVotingApiQuery(w http.ResponseWriter, r *http.Request) {
 				var description string
 				var open int
 				var ended int
-				var votespertoken int
+				var visible int
 				row := db.QueryRow("SELECT name, id, description FROM Voting WHERE id = $1", strings.Join(target, ""))
 				switch err := row.Scan(&name, &id, &description); err {
 				case sql.ErrNoRows:
 					fmt.Fprint(w, "no votings matching that id")
 				case nil:
 					w.Header().Set("Content-Type", "application/json")
-					votingJson, _ := json.Marshal(Voting{name, id, description, open, ended, votespertoken})
+					votingJson, _ := json.Marshal(Voting{name, id, description, open, ended, visible})
 					w.Write(votingJson)
 				default:
 					log.Panic(err)

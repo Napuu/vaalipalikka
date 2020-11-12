@@ -38,7 +38,7 @@ func HandleVoteApiQuery(w http.ResponseWriter, r *http.Request) {
 			var currentVotes int
 			var allowedVotes int
 			db.QueryRow("SELECT COUNT(*) FROM Vote WHERE token = $1 AND votingId = $2", t.Token, t.VotingId).Scan(&currentVotes)
-			db.QueryRow("SELECT votesPerToken FROM Voting WHERE id = $1", t.VotingId).Scan(&allowedVotes)
+			db.QueryRow("SELECT visible FROM Voting WHERE id = $1", t.VotingId).Scan(&allowedVotes)
 			if currentVotes < allowedVotes {
 				_, err := db.Exec("INSERT INTO Vote(id, votingId, candidateId, token) VALUES($1, $2, $3, $4)", t.Id, t.VotingId, t.CandidateId, t.Token)
 				if err != nil {
