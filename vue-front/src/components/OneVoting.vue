@@ -10,10 +10,10 @@
           </div>
           <div v-else>
             <div v-if="candidate.Voted">
-              <div class="btn button candidateName btn-success disabled btn-block rounded-0" v-on:click.native="vittu" block squared disabled variant="success">{{candidate.Name}}</div>
+              <div class="btn button candidateName btn-success disabled btn-block rounded-0" block squared disabled variant="success">{{candidate.Name}}</div>
             </div>
             <div v-else>
-              <div class="btn button candidateName btn-secondary disabled btn-block rounded-0" v-on:click.native="vittu" block squared disabled variant="primary">{{candidate.Name}}</div>
+              <div class="btn button candidateName btn-secondary disabled btn-block rounded-0" block squared disabled variant="primary">{{candidate.Name}}</div>
             </div>
           </div>
         </div>
