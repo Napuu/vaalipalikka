@@ -48,9 +48,12 @@ import OneTokenAdmin from '@/components/OneTokenAdmin.vue'
 import VotesAdmin from '@/components/VotesAdmin.vue'
 import store from '../store'
     /* eslint-disable no-alert, no-console */
+let interval;
 export default {
   methods: {
     move(_tab: string) {
+      clearInterval(interval);
+      let ff = this;
       switch (_tab) {
         case "candidate":
           store.dispatch("fetchCandidates")
@@ -63,6 +66,19 @@ export default {
           break
         case "token":
           store.dispatch("fetchTokens")
+          break
+        case "vote":
+          interval = setInterval(() => {
+            ff.store.dispatch("fetchVotes")
+            ff.move("refresh");
+          }, 5000);
+          break
+        // I have no idea about vue lifecycles right now so using this hack to remount component
+        case "refresh":
+          setTimeout(() => {
+            ff.move("vote");
+          }, 10);
+          break
       }
       this.tab = _tab
     },
