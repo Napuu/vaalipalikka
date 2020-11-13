@@ -16,4 +16,8 @@ docker-compose exec postgres psql -U vaalit -c "insert into token(value, valid) 
 
 service is up at localhost:3000
 
+# creating and inserting voting tokens 
+node code-generator.js > codes.txt # obviously some other way can be used to create actual codes
+cat codes.txt | xargs -L1 -I @ echo "insert into token(value, valid) values('@', 0);" | docker-compose exec -T postgres psql -U vaalit
+
 ```
