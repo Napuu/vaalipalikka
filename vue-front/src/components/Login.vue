@@ -12,7 +12,6 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
-    /* eslint-disable no-alert, no-console */
 @Component
 export default class Login extends Vue {
   private token: string = ""
@@ -22,7 +21,6 @@ export default class Login extends Vue {
     }
   }
   login() {
-    console.log("token should be here " + this.token)
     if (this.token !== "") {
       fetch("/vaalit_api?action=login", {headers: {"Authorization": this.token}}).then(async res => {
         let text = await res.text()
