@@ -31,23 +31,12 @@ export default class Login extends Vue {
             this.$store.commit("login", {role: "admin", token: this.token})
             this.$router.push("admin")
             this.$store.dispatch("fetchAdminViewableData")
-            setInterval(() => {
-              this.$store.dispatch("fetchAdminViewableData")
-            }, 10000);
           } else {
             let votings = await fetch("/vaalit_api?action=voter&a=show", {headers: {"Authorization": this.token}})
             let votingsJson = await votings.json()
             this.$store.commit("setNonAdminVotings", {votings: votingsJson})
             this.$store.commit("login", {role: "voter", token: this.token})
             this.$router.push("voting");
-            const _token = this.token; // can't access this inside interval :-)
-            setInterval(() => {
-              fetch("/vaalit_api?action=voter&a=show", {headers: {"Authorization": _token}})
-                .then((res) => res.json())
-		.then((votings) => {
-                  this.$store.commit("setNonAdminVotings", {votings})
-		});
-            }, 10000);
           }
           window.localStorage.setItem("token", this.token)
         } else {
