@@ -2,7 +2,7 @@
 
 Voting machine for student guilds [(Rakennusinsinöörikilta)](https://rakennusinsinoorikilta.fi) election meetings.
 
-Secure to use in in scenarios where people can be trusted to not do bad things. Eg. ddos is fairly effective against this as proper logging in procedure is missing.
+Secure to use in in scenarios where people can be trusted to not do bad things. Eg. brute force attack is fairly effective against this as proper logging in procedure is missing.
 
 ## setup
 
